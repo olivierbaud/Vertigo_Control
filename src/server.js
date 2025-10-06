@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const WebSocketServer = require('./websocket/server');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -10,6 +12,9 @@ const deviceRoutes = require('./routes/devices');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Create HTTP server (needed for WebSocket)
+const server = http.createServer(app);
 
 // Middleware
 app.use(cors());
@@ -47,9 +52,17 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Initialize WebSocket server
+const wsServer = new WebSocketServer(server);
+wsServer.startHeartbeat();
+
+// Make WebSocket server available to routes
+app.set('wsServer', wsServer);
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);
   console.log(`✓ Environment: ${process.env.NODE_ENV}`);
   console.log(`✓ Health check: http://localhost:${PORT}/health`);
+  console.log(`✓ WebSocket: ws://localhost:${PORT}`);
 });
