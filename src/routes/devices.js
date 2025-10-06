@@ -79,6 +79,14 @@ router.post('/', async (req, res) => {
       [controllerId, device_id, name, type, connection_config || null]
     );
     
+    // Push to WebSocket if controller is connected
+    const wsServer = req.app.get('wsServer');
+    if (wsServer) {
+      wsServer.broadcastConfigUpdate(controllerId, 'device_added', {
+        device: result.rows[0]
+      });
+    }
+    
     res.status(201).json({ 
       message: 'Device created',
       device: result.rows[0]
@@ -159,6 +167,14 @@ router.put('/:id', async (req, res) => {
        RETURNING id, device_id, name, type, connection_config, status, created_at, updated_at`,
       [name, type, connection_config, status, id]
     );
+
+    // Push to WebSocket if controller is connected
+    const wsServer = req.app.get('wsServer');
+    if (wsServer) {
+      wsServer.broadcastConfigUpdate(controllerId, 'device_updated', {
+        device: result.rows[0]
+      });
+    }
     
     res.json({ 
       message: 'Device updated',
@@ -191,6 +207,14 @@ router.delete('/:id', async (req, res) => {
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Device not found' });
+    }
+
+    // Push to WebSocket if controller is connected
+    const wsServer = req.app.get('wsServer');
+    if (wsServer) {
+      wsServer.broadcastConfigUpdate(controllerId, 'device_deleted', {
+        device_id: id
+      });
     }
     
     res.json({ message: 'Device deleted' });
