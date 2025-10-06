@@ -209,13 +209,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Device not found' });
     }
 
-    // Push to WebSocket if controller is connected
-    const wsServer = req.app.get('wsServer');
-    if (wsServer) {
-      wsServer.broadcastConfigUpdate(controllerId, 'device_deleted', {
-        device_id: id
-      });
-    }
+    
     
     res.json({ message: 'Device deleted' });
     
