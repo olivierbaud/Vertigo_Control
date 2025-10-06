@@ -6,6 +6,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const controllerRoutes = require('./routes/controllers');
+const deviceRoutes = require('./routes/devices');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/controllers', controllerRoutes);
+app.use('/api/controllers/:controllerId/devices', deviceRoutes);
 
 // 404 handler
 app.use((req, res) => {
