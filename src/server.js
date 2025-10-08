@@ -22,7 +22,27 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 // Middleware
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',  // Local Vite dev server
+  'http://localhost:3001',  // Alternative local port
+  process.env.FRONTEND_URL,  // Production frontend URL
+].filter(Boolean);  // Remove undefined values
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS: Blocked request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Request logging (simple)
