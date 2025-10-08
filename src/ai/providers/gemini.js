@@ -8,12 +8,19 @@ const BaseAIProvider = require('./base');
  */
 class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
+    // Default to stable Gemini 1.5 Flash model
     super(apiKey, {
-      model: 'gemini-2.0-flash-exp',
+      model: config.model || 'gemini-1.5-flash',
       temperature: 0.7,
       maxTokens: 8000,
       ...config
     });
+
+    console.log('GeminiProvider initialized with model:', this.config.model);
+
+    if (!this.config.model) {
+      throw new Error('Model name is required for Gemini provider');
+    }
 
     this.genAI = new GoogleGenerativeAI(this.apiKey);
     this.model = this.genAI.getGenerativeModel({
