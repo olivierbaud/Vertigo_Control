@@ -250,9 +250,32 @@ class GeminiProvider extends BaseAIProvider {
       const systemPrompt = this.buildSystemPrompt(context);
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
-      const result = await this.generateContentRequest(fullPrompt);
-      const responseText = this.extractText(result);
-      const parsed = this.parseResponse(responseText);
+      let attempt = 0;
+      let result = null;
+      let responseText = '';
+      let parsed = null;
+      let promptVariant = fullPrompt;
+      let lastParseError = null;
+
+      while (attempt < 2) {
+        result = await this.generateContentRequest(promptVariant);
+        responseText = this.extractText(result);
+
+        try {
+          parsed = this.parseResponse(responseText);
+          break;
+        } catch (error) {
+          lastParseError = error;
+          attempt += 1;
+
+          if (attempt >= 2) {
+            throw error;
+          }
+
+          console.warn('Gemini response was not valid JSON, retrying with stricter instructions');
+          promptVariant = `${fullPrompt}\n\nIMPORTANT: Respond ONLY with a JSON object exactly matching the required format. Do not include any prose or markdown.`;
+        }
+      }
 
       const usage = this.extractUsage(result);
 
