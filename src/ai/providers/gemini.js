@@ -13,7 +13,7 @@ class GeminiProvider extends BaseAIProvider {
       temperature: 0.7,
       maxTokens: 8000,
       ...config,
-      model: config.model || 'gemini-1.5-flash'
+      model: config.model || 'gemini-1.5-flash-latest'
     });
 
     console.log('GeminiProvider initialized with model:', this.config.model);
@@ -44,7 +44,7 @@ class GeminiProvider extends BaseAIProvider {
       }
     };
 
-    this.currentPricing = this.pricing[this.config.model] || this.pricing['gemini-2.0-flash-exp'];
+    this.currentPricing = this.pricing[this.config.model] || this.pricing['gemini-1.5-flash'];
   }
 
   /**
