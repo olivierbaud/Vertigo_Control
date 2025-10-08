@@ -16,17 +16,15 @@ class GeminiProvider extends BaseAIProvider {
       model: config.model || 'gemini-pro'
     });
 
-    this.genAI = new GoogleGenerativeAI(this.apiKey);
+    // Use v1 API endpoint directly instead of SDK (which uses v1beta)
+    this.apiEndpoint = `https://generativelanguage.googleapis.com/v1/models/${this.config.model}:generateContent`;
 
     console.log('GeminiProvider initialized with model:', this.config.model);
+    console.log('Using API endpoint:', this.apiEndpoint);
 
     if (!this.config.model) {
       throw new Error('Model name is required for Gemini provider');
     }
-
-    this.model = this.genAI.getGenerativeModel({
-      model: this.config.model
-    });
 
     // Pricing per million tokens (as of Oct 2024)
     // Gemini 2.0 Flash is free during experimental period
@@ -56,27 +54,39 @@ class GeminiProvider extends BaseAIProvider {
       const systemPrompt = this.buildSystemPrompt(context);
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
-      const result = await this.model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-        generationConfig: {
-          temperature: this.config.temperature,
-          maxOutputTokens: this.config.maxTokens,
-          responseMimeType: 'application/json'
-        }
+      // Make direct API call to v1 endpoint
+      const response = await fetch(`${this.apiEndpoint}?key=${this.apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+          generationConfig: {
+            temperature: this.config.temperature,
+            maxOutputTokens: this.config.maxTokens,
+            responseMimeType: 'application/json'
+          }
+        })
       });
 
-      const response = result.response;
-      const responseText = response.text();
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Gemini API error (${response.status}): ${errorData}`);
+      }
+
+      const data = await response.json();
+      const responseText = data.candidates[0].content.parts[0].text;
       const parsed = this.parseResponse(responseText);
 
       // Track usage (Gemini provides token counts)
       const usage = {
-        inputTokens: response.usageMetadata?.promptTokenCount || 0,
-        outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
-        totalTokens: response.usageMetadata?.totalTokenCount || 0,
+        inputTokens: data.usageMetadata?.promptTokenCount || 0,
+        outputTokens: data.usageMetadata?.candidatesTokenCount || 0,
+        totalTokens: data.usageMetadata?.totalTokenCount || 0,
         cost: this.calculateCost(
-          response.usageMetadata?.promptTokenCount || 0,
-          response.usageMetadata?.candidatesTokenCount || 0
+          data.usageMetadata?.promptTokenCount || 0,
+          data.usageMetadata?.candidatesTokenCount || 0
         )
       };
 
