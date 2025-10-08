@@ -10,10 +10,10 @@ class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
     // Default to stable Gemini 1.5 Flash model
     super(apiKey, {
-      model: config.model || 'gemini-1.5-flash',
       temperature: 0.7,
       maxTokens: 8000,
-      ...config
+      ...config,
+      model: config.model || 'gemini-1.5-flash'
     });
 
     console.log('GeminiProvider initialized with model:', this.config.model);
