@@ -19,6 +19,8 @@ Instead of learning complex programming languages and device protocols, users si
 - **Cloud Tier (Railway):** AI service, configuration, multi-tenant SaaS platform
 - **On-Premise Tier (NUC/Linux):** Runtime execution, device control, works offline
 
+**Scope Note (October 2025):** This roadmap reflects the Railway/cloud backend contained in this repository. The on-premise runtime (control-system) is maintained in a separate codebase, so its delivery status is tracked externally.
+
 **Key Innovation:** File-based GUI storage with three-state deployment (DRAFT → DEPLOYED → LIVE)
 
 ### Target Users
@@ -31,15 +33,20 @@ Instead of learning complex programming languages and device protocols, users si
 
 ## Development Roadmap Overview
 
-- **Phase 1-2 (Weeks 1-8):** ✅ **COMPLETED** - Foundation + Device Control
-- **Phase 3 (Weeks 9-12):** 🔄 **NEXT** - AI Service Backend with File System
-- **Phase 4 (Weeks 13-16):** User Interfaces (Web + NUC)
-- **Phase 5 (Weeks 17-20):** Expansion + Database Migration
-- **Phase 6 (Weeks 21-24):** Launch & Iterate
+- **Phase 1 (Weeks 1-4):** Status: **Completed (cloud foundation verified in repo)** - Platform setup, authentication, multi-tenant schema, REST APIs
+- **Phase 2 (Weeks 5-8):** Status: **Blocked on control-system runtime** - Cloud device and scene APIs exist here; NUC runtime progress tracked externally
+- **Phase 3 (Weeks 9-12):** Status: **In Progress (cloud features implemented)** - AI provider stack, file-based GUI workflow, deploy/sync endpoints; on-prem sync handler pending
+- **Phase 4 (Weeks 13-16):** Status: **Not Started** - User interfaces (web dashboard + NUC shell)
+- **Phase 5 (Weeks 17-20):** Status: **Not Started** - Expansion + database migration
+- **Phase 6 (Weeks 21-24):** Status: **Not Started** - Launch & iterate
 
 ---
 
-# Phase 1: Foundation (Weeks 1-4) ✅ COMPLETED
+# Phase 1: Foundation (Weeks 1-4)
+
+**Status:** Completed (cloud backend delivered in this repository).
+**What we have:** Multi-tenant REST backend, auth, and database migrations implemented in this repo (`db/migrations/001_initial_schema.sql`, `src/routes/*`, `src/server.js`).
+
 
 ## Sprint 1: Core Infrastructure ✅
 
@@ -89,7 +96,12 @@ Instead of learning complex programming languages and device protocols, users si
 
 ---
 
-# Phase 2: Device Control (Weeks 5-8) ✅ COMPLETED
+# Phase 2: Device Control (Weeks 5-8)
+
+**Status:** Blocked on control-system runtime (cloud APIs delivered here; on-prem execution tracked externally).
+**Cloud deliverables verified:** Device/control/scene management APIs and WebSocket server (`src/routes/devices.js`, `src/routes/device-controls.js`, `src/routes/scenes.js`, `src/websocket/server.js`).
+**Pending external:** Device drivers, scene runtime, and sync client ship with the separate control-system repo.
+
 
 ## Sprint 3: First Device Driver ✅
 
@@ -129,7 +141,11 @@ Instead of learning complex programming languages and device protocols, users si
 
 ---
 
-# Phase 3: AI Integration (Weeks 9-12) 🔄 NEXT
+# Phase 3: AI Integration (Weeks 9-12)
+
+**Status:** In progress on cloud side (AI services, file workflows, deploy/sync APIs implemented; on-prem sync handler pending external repo).
+**Cloud deliverables verified:** AI provider stack, file manager, context builder, validator, and GUI endpoints (`src/ai/*`, `src/routes/ai.js`, `src/routes/gui.js`, `db/migrations/002_gui_file_system.sql`).
+**Pending external:** NUC sync handler and live deployment workflow within the control-system runtime.
 
 **ARCHITECTURE:** Cloud-based AI service with file-based GUI storage and manual sync control
 
@@ -892,11 +908,11 @@ Instead of learning complex programming languages and device protocols, users si
 
 **Total Duration:** 24 weeks (6 months)
 
-- **Weeks 1-8:** ✅ Foundation + Device Control (COMPLETED)
-- **Weeks 9-12:** 🔄 AI Integration (NEXT - File-based + Manual Sync)
-- **Weeks 13-16:** User Interfaces
-- **Weeks 17-20:** Expansion + Database Migration
-- **Weeks 21-24:** Launch & Scale
+- **Weeks 1-8:** Cloud foundation delivered in this repository; on-prem runtime tracked externally.
+- **Weeks 9-12:** Cloud AI workflows implemented here; NUC sync handler pending in the control-system repo.
+- **Weeks 13-16:** User interfaces (not started).
+- **Weeks 17-20:** Expansion + database migration (not started).
+- **Weeks 21-24:** Launch & iterate (not started).
 
 **Projected Public Launch:** Mid-January 2026
 
