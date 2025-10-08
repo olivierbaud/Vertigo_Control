@@ -100,7 +100,10 @@ router.post('/chat', async (req, res) => {
       });
     }
 
-    res.status(500).json({ error: 'AI generation failed' });
+    res.status(500).json({
+      error: 'AI generation failed',
+      message: error.message
+    });
   }
 });
 

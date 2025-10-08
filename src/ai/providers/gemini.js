@@ -1,19 +1,18 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const BaseAIProvider = require('./base');
 
 // Map legacy or shorthand model names to supported Gemini identifiers
 const MODEL_ALIASES = {
-  'gemini-pro': 'gemini-1.5-pro',
-  'gemini-pro-latest': 'gemini-1.5-pro',
-  'gemini-1.5-pro': 'gemini-1.5-pro',
-  'gemini-1.5-pro-001': 'gemini-1.5-pro',
-  'gemini-1.5-pro-002': 'gemini-1.5-pro',
-  'gemini-1.5-pro-latest': 'gemini-1.5-pro',
-  'gemini-flash': 'gemini-1.5-flash',
-  'gemini-1.5-flash': 'gemini-1.5-flash',
-  'gemini-1.5-flash-001': 'gemini-1.5-flash',
-  'gemini-1.5-flash-002': 'gemini-1.5-flash',
-  'gemini-1.5-flash-latest': 'gemini-1.5-flash',
+  'gemini-pro': 'gemini-1.5-pro-latest',
+  'gemini-pro-latest': 'gemini-1.5-pro-latest',
+  'gemini-1.5-pro': 'gemini-1.5-pro-latest',
+  'gemini-1.5-pro-001': 'gemini-1.5-pro-001',
+  'gemini-1.5-pro-002': 'gemini-1.5-pro-002',
+  'gemini-1.5-pro-latest': 'gemini-1.5-pro-latest',
+  'gemini-flash': 'gemini-1.5-flash-latest',
+  'gemini-1.5-flash': 'gemini-1.5-flash-latest',
+  'gemini-1.5-flash-001': 'gemini-1.5-flash-001',
+  'gemini-1.5-flash-002': 'gemini-1.5-flash-002',
+  'gemini-1.5-flash-latest': 'gemini-1.5-flash-latest',
   'gemini-2.0-flash-exp': 'gemini-2.0-flash-exp',
   'gemini-2.0-flash': 'gemini-2.0-flash'
 };
@@ -25,7 +24,7 @@ const MODEL_ALIASES = {
  */
 class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
-    const requestedModel = (config.model || 'gemini-1.5-flash').toLowerCase().trim();
+    const requestedModel = (config.model || 'gemini-1.5-flash-latest').toLowerCase().trim();
     const canonicalModel = MODEL_ALIASES[requestedModel] || requestedModel;
 
     super(apiKey, {
@@ -39,10 +38,8 @@ class GeminiProvider extends BaseAIProvider {
       throw new Error('Model name is required for Gemini provider');
     }
 
-    this.genAI = new GoogleGenerativeAI(apiKey, { apiVersion: 'v1' });
-    this.model = this.genAI.getGenerativeModel({
-      model: this.config.model
-    });
+    this.apiKey = apiKey;
+    this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1';
 
     console.log(
       'GeminiProvider initialized with model:',
@@ -88,6 +85,137 @@ class GeminiProvider extends BaseAIProvider {
   }
 
   /**
+   * Execute generateContent call against Gemini HTTP API (v1)
+   */
+  async generateContentRequest(prompt) {
+    const attempts = [
+      {
+        baseUrl: 'https://generativelanguage.googleapis.com/v1',
+        model: this.config.model
+      },
+      {
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+        model: this.config.model
+      }
+    ];
+
+    // If configured model is already a legacy name, don't push duplicate
+    if (!['gemini-pro', 'gemini-pro-vision'].includes(this.config.model)) {
+      attempts.push({
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+        model: 'gemini-pro'
+      });
+    }
+
+    const body = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }]
+        }
+      ],
+      generationConfig: {
+        temperature: this.config.temperature,
+        maxOutputTokens: this.config.maxTokens
+      }
+    };
+
+    let lastError = null;
+
+    for (const attempt of attempts) {
+      try {
+        const url = `${attempt.baseUrl}/models/${attempt.model}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const message =
+            data?.error?.message ||
+            data?.message ||
+            `Gemini API request failed with status ${response.status}`;
+          const error = new Error(message);
+          error.status = response.status;
+
+          if (response.status === 404) {
+            lastError = error;
+            console.warn(
+              `Gemini model ${attempt.model} not available on ${attempt.baseUrl}. Trying fallback...`
+            );
+            continue;
+          }
+
+          throw error;
+        }
+
+        if (attempt.model !== this.config.model) {
+          console.warn(
+            `GeminiProvider falling back to model "${attempt.model}" via ${attempt.baseUrl}`
+          );
+        }
+
+        return data;
+      } catch (error) {
+        if (error.status === 404) {
+          lastError = error;
+          continue;
+        }
+        lastError = error;
+        break;
+      }
+    }
+
+    if (lastError) {
+      throw lastError;
+    }
+
+    throw new Error('Gemini API request failed: no available models/responders');
+  }
+
+  extractText(result) {
+    const parts =
+      result?.candidates?.[0]?.content?.parts ||
+      result?.candidates?.[0]?.output || [];
+
+    if (Array.isArray(parts)) {
+      return parts
+        .map(part => (typeof part === 'string' ? part : part.text || ''))
+        .join('');
+    }
+
+    return '';
+  }
+
+  extractUsage(result) {
+    const usage = result?.usageMetadata;
+    if (!usage) {
+      return {
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        cost: this.calculateCost(0, 0)
+      };
+    }
+
+    return {
+      inputTokens: usage.promptTokenCount || 0,
+      outputTokens: usage.candidatesTokenCount || 0,
+      totalTokens: usage.totalTokenCount || 0,
+      cost: this.calculateCost(
+        usage.promptTokenCount || 0,
+        usage.candidatesTokenCount || 0
+      )
+    };
+  }
+
+  /**
    * Generate GUI file modifications from user prompt
    */
   async generateGUIFiles(userPrompt, context) {
@@ -95,29 +223,11 @@ class GeminiProvider extends BaseAIProvider {
       const systemPrompt = this.buildSystemPrompt(context);
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
-      const result = await this.model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-        generationConfig: {
-          temperature: this.config.temperature,
-          maxOutputTokens: this.config.maxTokens
-          // Note: responseMimeType not supported in v1 API
-        }
-      });
-
-      const response = result.response;
-      const responseText = response.text();
+      const result = await this.generateContentRequest(fullPrompt);
+      const responseText = this.extractText(result);
       const parsed = this.parseResponse(responseText);
 
-      // Track usage (Gemini provides token counts)
-      const usage = {
-        inputTokens: response.usageMetadata?.promptTokenCount || 0,
-        outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
-        totalTokens: response.usageMetadata?.totalTokenCount || 0,
-        cost: this.calculateCost(
-          response.usageMetadata?.promptTokenCount || 0,
-          response.usageMetadata?.candidatesTokenCount || 0
-        )
-      };
+      const usage = this.extractUsage(result);
 
       return {
         ...parsed,
@@ -146,36 +256,13 @@ class GeminiProvider extends BaseAIProvider {
       const systemPrompt = this.buildSystemPrompt(context);
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
-      const result = await this.model.generateContentStream({
-        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-        generationConfig: {
-          temperature: this.config.temperature,
-          maxOutputTokens: this.config.maxTokens
-        }
-      });
-
-      let fullText = '';
-      let usageMetadata = null;
-
-      for await (const chunk of result.stream) {
-        const text = chunk.text();
-        fullText += text;
-        onChunk(text);
-
-        // Last chunk contains usage metadata
-        if (chunk.usageMetadata) {
-          usageMetadata = chunk.usageMetadata;
-        }
-      }
+      const result = await this.generateContentRequest(fullPrompt);
+      const text = this.extractText(result);
+      onChunk(text);
 
       return {
-        fullText,
-        usage: usageMetadata ? {
-          inputTokens: usageMetadata.promptTokenCount,
-          outputTokens: usageMetadata.candidatesTokenCount,
-          totalTokens: usageMetadata.totalTokenCount,
-          cost: this.calculateCost(usageMetadata.promptTokenCount, usageMetadata.candidatesTokenCount)
-        } : null
+        fullText: text,
+        usage: this.extractUsage(result)
       };
 
     } catch (error) {
