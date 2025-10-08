@@ -114,15 +114,27 @@ class WebSocketServer {
         case 'heartbeat':
           this.handleHeartbeat(ws);
           break;
-          
+
         case 'status_update':
           this.handleStatusUpdate(ws, message.data);
           break;
-          
+
         case 'execution_result':
           this.handleExecutionResult(ws, message.data);
           break;
-          
+
+        case 'sync_progress':
+          this.handleSyncProgress(ws, message.data);
+          break;
+
+        case 'sync_complete':
+          this.handleSyncComplete(ws, message.data);
+          break;
+
+        case 'sync_error':
+          this.handleSyncError(ws, message.data);
+          break;
+
         default:
           console.log('Unknown message type:', message.type);
       }
@@ -154,6 +166,57 @@ class WebSocketServer {
   handleExecutionResult(ws, data) {
     console.log(`Execution result from ${ws.controllerName}:`, data);
     // Store execution logs if needed
+  }
+
+  handleSyncProgress(ws, data) {
+    console.log(`Sync progress from ${ws.controllerName}:`, data);
+    // Update sync_history table
+    pool.query(
+      `UPDATE sync_history
+       SET status = 'in_progress'
+       WHERE id = $1`,
+      [data.sync_id]
+    ).catch(err => console.error('Sync progress update error:', err));
+  }
+
+  handleSyncComplete(ws, data) {
+    console.log(`Sync complete from ${ws.controllerName}:`, data);
+    // Update sync_history and create live version snapshot
+    pool.query(
+      `UPDATE sync_history
+       SET status = 'completed',
+           completed_at = NOW(),
+           duration_ms = $2,
+           files_synced = $3
+       WHERE id = $1`,
+      [data.sync_id, data.duration_ms, data.files_synced]
+    ).catch(err => console.error('Sync complete update error:', err));
+
+    // Mark version as live
+    if (data.version) {
+      pool.query(
+        `INSERT INTO gui_file_versions
+         (controller_id, version_number, state, files, created_by)
+         SELECT controller_id, version_number, 'live', files, created_by
+         FROM gui_file_versions
+         WHERE controller_id = $1 AND version_number = $2 AND state = 'deployed'
+         ON CONFLICT (controller_id, version_number) DO NOTHING`,
+        [ws.controllerId, data.version]
+      ).catch(err => console.error('Live version update error:', err));
+    }
+  }
+
+  handleSyncError(ws, data) {
+    console.error(`Sync error from ${ws.controllerName}:`, data);
+    // Update sync_history with error
+    pool.query(
+      `UPDATE sync_history
+       SET status = 'failed',
+           completed_at = NOW(),
+           error_message = $2
+       WHERE id = $1`,
+      [data.sync_id, data.error_message]
+    ).catch(err => console.error('Sync error update error:', err));
   }
   
   // Send message to specific controller
@@ -189,8 +252,34 @@ class WebSocketServer {
         scene_id: sceneId
       }
     };
-    
+
     return this.sendToController(controllerId, message);
+  }
+
+  // Send GUI sync command (deployed → NUC)
+  async syncGUI(controllerId, syncId, version, files) {
+    const message = {
+      type: 'gui_sync',
+      timestamp: new Date().toISOString(),
+      data: {
+        sync_id: syncId,
+        version: version,
+        files: files
+      }
+    };
+
+    const sent = this.sendToController(controllerId, message);
+
+    if (sent) {
+      // Create sync history record
+      await pool.query(
+        `INSERT INTO sync_history (id, controller_id, version_number, status, triggered_by)
+         VALUES ($1, $2, $3, 'pending', $4)`,
+        [syncId, controllerId, version, 'api']
+      ).catch(err => console.error('Sync history creation error:', err));
+    }
+
+    return sent;
   }
   
   // Get controller connection status

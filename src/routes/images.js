@@ -100,14 +100,14 @@ router.get('/', async (req, res) => {
 });
 
 /**
- * DELETE /api/images/*
- * Delete an image (filename can contain slashes)
+ * DELETE /api/images/:integratorPath/:filename
+ * Delete an image (format: integratorId/timestamp-hash.ext)
  */
-router.delete('/*', async (req, res) => {
+router.delete('/:integratorPath/:filename', async (req, res) => {
   try {
     const { integrator_id } = req.user;
-    // Remove leading slash from path
-    const filename = req.params[0];
+    // Reconstruct full filename path
+    const filename = `${req.params.integratorPath}/${req.params.filename}`;
 
     if (!imageStorage.isEnabled()) {
       return res.status(503).json({
