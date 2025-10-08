@@ -8,20 +8,15 @@ const BaseAIProvider = require('./base');
  */
 class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
-    // Default to stable Gemini 1.5 Flash model
+    // Default to Gemini Pro (stable, widely available model)
     super(apiKey, {
       temperature: 0.7,
       maxTokens: 8000,
       ...config,
-      model: config.model || 'gemini-1.5-flash-latest'
+      model: config.model || 'gemini-pro'
     });
 
     this.genAI = new GoogleGenerativeAI(this.apiKey);
-
-    // List available models for debugging
-    this.listAvailableModels().catch(err => {
-      console.error('Failed to list models:', err.message);
-    });
 
     console.log('GeminiProvider initialized with model:', this.config.model);
 
@@ -194,23 +189,6 @@ class GeminiProvider extends BaseAIProvider {
       output: outputCost,
       total: inputCost + outputCost
     };
-  }
-
-  /**
-   * List available Gemini models
-   */
-  async listAvailableModels() {
-    try {
-      const models = await this.genAI.listModels();
-      console.log('Available Gemini models:');
-      models.forEach(model => {
-        console.log(`  - ${model.name} (supports: ${model.supportedGenerationMethods?.join(', ')})`);
-      });
-      return models;
-    } catch (error) {
-      console.error('Error listing models:', error.message);
-      throw error;
-    }
   }
 
   /**
