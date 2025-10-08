@@ -1,0 +1,544 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "Vertigo Control API",
+  "collectionId": "vertigo-control-api",
+  "dateExported": "2025-10-08",
+  "version": "1.2",
+  "folders": [
+    {
+      "id": "auth",
+      "name": "Authentication",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 10000
+    },
+    {
+      "id": "projects",
+      "name": "Projects",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 20000
+    },
+    {
+      "id": "controllers",
+      "name": "Controllers",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 30000
+    },
+    {
+      "id": "devices",
+      "name": "Devices",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 40000
+    },
+    {
+      "id": "controls",
+      "name": "Device Controls",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 50000
+    },
+    {
+      "id": "scenes",
+      "name": "Scenes",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 60000
+    },
+    {
+      "id": "ai",
+      "name": "AI Chat",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 70000
+    },
+    {
+      "id": "gui",
+      "name": "GUI Management",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 80000
+    },
+    {
+      "id": "images",
+      "name": "Images",
+      "containerId": "",
+      "created": "2025-10-08",
+      "sortNum": 90000
+    }
+  ],
+  "requests": [
+    {
+      "id": "auth-register",
+      "name": "Register",
+      "url": "{{baseUrl}}/api/auth/register",
+      "method": "POST",
+      "sortNum": 10000,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"name\": \"AV Integration Company\",\n  \"email\": \"admin@avcompany.com\",\n  \"password\": \"securepassword123\"\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "set-env-var",
+          "custom": "json.token",
+          "action": "setto",
+          "value": "{{token}}"
+        }
+      ]
+    },
+    {
+      "id": "auth-login",
+      "name": "Login",
+      "url": "{{baseUrl}}/api/auth/login",
+      "method": "POST",
+      "sortNum": 10100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"admin@avcompany.com\",\n  \"password\": \"securepassword123\"\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "set-env-var",
+          "custom": "json.token",
+          "action": "setto",
+          "value": "{{token}}"
+        }
+      ]
+    },
+    {
+      "id": "projects-list",
+      "name": "List Projects",
+      "url": "{{baseUrl}}/api/projects",
+      "method": "GET",
+      "sortNum": 20000,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "projects-create",
+      "name": "Create Project",
+      "url": "{{baseUrl}}/api/projects",
+      "method": "POST",
+      "sortNum": 20100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"name\": \"Corporate Headquarters\",\n  \"customer_name\": \"Acme Corp\",\n  \"location\": \"New York, NY\"\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "set-env-var",
+          "custom": "json.project.id",
+          "action": "setto",
+          "value": "{{projectId}}"
+        }
+      ]
+    },
+    {
+      "id": "projects-get",
+      "name": "Get Project",
+      "url": "{{baseUrl}}/api/projects/{{projectId}}",
+      "method": "GET",
+      "sortNum": 20200,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "projects-update",
+      "name": "Update Project",
+      "url": "{{baseUrl}}/api/projects/{{projectId}}",
+      "method": "PUT",
+      "sortNum": 20300,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"name\": \"Updated Project Name\"\n}",
+        "form": []
+      },
+      "tests": []
+    },
+    {
+      "id": "controllers-list",
+      "name": "List Controllers",
+      "url": "{{baseUrl}}/api/projects/{{projectId}}/controllers",
+      "method": "GET",
+      "sortNum": 30000,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "controllers-create",
+      "name": "Create Controller",
+      "url": "{{baseUrl}}/api/projects/{{projectId}}/controllers",
+      "method": "POST",
+      "sortNum": 30100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"name\": \"Main Floor Controller\"\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "set-env-var",
+          "custom": "json.controller.id",
+          "action": "setto",
+          "value": "{{controllerId}}"
+        }
+      ]
+    },
+    {
+      "id": "devices-list",
+      "name": "List Devices",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/devices",
+      "method": "GET",
+      "sortNum": 40000,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "devices-create",
+      "name": "Create Device",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/devices",
+      "method": "POST",
+      "sortNum": 40100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"device_id\": \"dsp_main\",\n  \"name\": \"Harvey DSP - Main Room\",\n  \"type\": \"harvey_dsp\",\n  \"connection_config\": {\n    \"host\": \"192.168.1.50\",\n    \"port\": 3004\n  }\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "set-env-var",
+          "custom": "json.device.id",
+          "action": "setto",
+          "value": "{{deviceId}}"
+        }
+      ]
+    },
+    {
+      "id": "controls-create",
+      "name": "Create Control",
+      "url": "{{baseUrl}}/api/devices/{{deviceId}}/controls",
+      "method": "POST",
+      "sortNum": 50100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"control_id\": \"ctrl_master_volume\",\n  \"logical_name\": \"Master Volume\",\n  \"control_type\": \"gain\",\n  \"block_id\": \"dsp.0.gain.0\"\n}",
+        "form": []
+      },
+      "tests": []
+    },
+    {
+      "id": "scenes-create",
+      "name": "Create Scene",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/scenes",
+      "method": "POST",
+      "sortNum": 60100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"scene_id\": \"scene_presentation\",\n  \"name\": \"Presentation Mode\",\n  \"description\": \"Lower lights, raise screen, set audio\",\n  \"steps\": [\n    {\n      \"device\": \"dsp_main\",\n      \"control\": \"ctrl_master_volume\",\n      \"value\": 70,\n      \"delay\": 0\n    }\n  ],\n  \"continue_on_error\": false\n}",
+        "form": []
+      },
+      "tests": [
+        {
+          "type": "set-env-var",
+          "custom": "json.scene.id",
+          "action": "setto",
+          "value": "{{sceneId}}"
+        }
+      ]
+    },
+    {
+      "id": "scenes-execute",
+      "name": "Execute Scene",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/scenes/{{sceneId}}/execute",
+      "method": "POST",
+      "sortNum": 60200,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "ai-providers",
+      "name": "List AI Providers",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/ai/providers",
+      "method": "GET",
+      "sortNum": 70000,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "ai-chat",
+      "name": "Chat with AI",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/ai/chat",
+      "method": "POST",
+      "sortNum": 70100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"prompt\": \"Create a main page with volume controls and scene buttons\",\n  \"provider\": \"gemini\"\n}",
+        "form": []
+      },
+      "tests": []
+    },
+    {
+      "id": "gui-status",
+      "name": "Get GUI Status",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/gui/status",
+      "method": "GET",
+      "sortNum": 80000,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "gui-draft-files",
+      "name": "Get Draft Files",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/gui/files/draft",
+      "method": "GET",
+      "sortNum": 80100,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "gui-deploy",
+      "name": "Deploy Draft Files",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/gui/deploy",
+      "method": "POST",
+      "sortNum": 80200,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"commitMessage\": \"Added volume controls to main page\"\n}",
+        "form": []
+      },
+      "tests": []
+    },
+    {
+      "id": "gui-sync",
+      "name": "Sync to NUC",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/gui/sync",
+      "method": "POST",
+      "sortNum": 80300,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "gui-versions",
+      "name": "Get Version History",
+      "url": "{{baseUrl}}/api/controllers/{{controllerId}}/gui/versions",
+      "method": "GET",
+      "sortNum": 80400,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    },
+    {
+      "id": "images-status",
+      "name": "Check Image Storage Status",
+      "url": "{{baseUrl}}/api/images/status",
+      "method": "GET",
+      "sortNum": 90000,
+      "created": "2025-10-08",
+      "modified": "2025-10-08",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{token}}"
+        }
+      ],
+      "params": [],
+      "tests": []
+    }
+  ],
+  "settings": {
+    "options": {
+      "baseUrl": "https://backend-production-baec.up.railway.app"
+    },
+    "envVars": [
+      {
+        "name": "baseUrl",
+        "value": "https://backend-production-baec.up.railway.app"
+      },
+      {
+        "name": "token",
+        "value": ""
+      },
+      {
+        "name": "projectId",
+        "value": ""
+      },
+      {
+        "name": "controllerId",
+        "value": ""
+      },
+      {
+        "name": "deviceId",
+        "value": ""
+      },
+      {
+        "name": "sceneId",
+        "value": ""
+      }
+    ]
+  }
+}
