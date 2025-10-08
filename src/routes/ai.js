@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { authenticate } = require('../middleware/auth');
+const pool = require('../db/connection');
 const providerFactory = require('../ai/provider-factory');
 const contextBuilder = require('../ai/context');
 const validator = require('../ai/validator');
@@ -27,7 +28,7 @@ router.post('/chat', async (req, res) => {
     }
 
     // Verify controller ownership
-    const controllerCheck = await req.app.locals.pool.query(
+    const controllerCheck = await pool.query(
       `SELECT c.id FROM controllers c
        JOIN projects p ON c.project_id = p.id
        WHERE c.id = $1 AND p.integrator_id = $2`,
