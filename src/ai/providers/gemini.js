@@ -1,51 +1,84 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const BaseAIProvider = require('./base');
 
+// Map legacy or shorthand model names to supported Gemini identifiers
+const MODEL_ALIASES = {
+  'gemini-pro': 'gemini-1.5-pro-latest',
+  'gemini-pro-latest': 'gemini-1.5-pro-latest',
+  'gemini-1.5-pro': 'gemini-1.5-pro-latest',
+  'gemini-1.5-pro-001': 'gemini-1.5-pro-latest',
+  'gemini-1.5-pro-002': 'gemini-1.5-pro-latest',
+  'gemini-flash': 'gemini-1.5-flash-latest',
+  'gemini-1.5-flash': 'gemini-1.5-flash-latest',
+  'gemini-1.5-flash-001': 'gemini-1.5-flash-latest',
+  'gemini-1.5-flash-002': 'gemini-1.5-flash-latest',
+  'gemini-2.0-flash-exp': 'gemini-2.0-flash',
+  'gemini-2.0-flash': 'gemini-2.0-flash'
+};
+
 /**
  * GeminiProvider
  * Google Gemini AI provider for GUI generation
- * Uses Gemini 2.0 Flash for fast, cost-effective generation
+ * Defaults to the widely available Gemini 1.5 Flash model
  */
 class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
-    // Default to Gemini Pro (stable, widely available model)
+    const requestedModel = (config.model || 'gemini-1.5-flash').toLowerCase();
+    const canonicalModel = MODEL_ALIASES[requestedModel] || requestedModel;
+
     super(apiKey, {
       temperature: 0.7,
       maxTokens: 8000,
       ...config,
-      model: config.model || 'gemini-pro'
+      model: canonicalModel
     });
-
-    // Use v1 API (stable) instead of v1beta
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({
-      model: this.config.model
-    });
-
-    console.log('GeminiProvider initialized with model:', this.config.model);
 
     if (!this.config.model) {
       throw new Error('Model name is required for Gemini provider');
     }
 
+    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.model = this.genAI.getGenerativeModel({
+      model: this.config.model
+    });
+
+    console.log(
+      'GeminiProvider initialized with model:',
+      this.config.model,
+      '(requested:',
+      requestedModel,
+      ')'
+    );
+
     // Pricing per million tokens (as of Oct 2024)
-    // Gemini 2.0 Flash is free during experimental period
     this.pricing = {
-      'gemini-2.0-flash-exp': {
-        input: 0.00,   // Free during experimental
-        output: 0.00
+      'gemini-2.0-flash': {
+        input: 0.0,
+        output: 0.0
       },
       'gemini-1.5-pro': {
-        input: 3.50,   // $3.50 per 1M input tokens
-        output: 10.50  // $10.50 per 1M output tokens
+        input: 3.5,
+        output: 10.5
       },
       'gemini-1.5-flash': {
-        input: 0.075,  // $0.075 per 1M input tokens
-        output: 0.30   // $0.30 per 1M output tokens
+        input: 0.075,
+        output: 0.30
       }
     };
 
-    this.currentPricing = this.pricing[this.config.model] || this.pricing['gemini-1.5-flash'];
+    const pricingKey = this.getPricingKey(this.config.model);
+    this.currentPricing = this.pricing[pricingKey] || this.pricing['gemini-1.5-flash'];
+  }
+
+  /**
+   * Determine pricing key ignoring version suffixes like "-latest" or "-002"
+   */
+  getPricingKey(modelName) {
+    if (!modelName) return 'gemini-1.5-flash';
+    const normalized = modelName
+      .replace(/-latest$/i, '')
+      .replace(/-\d{3}$/i, '');
+    return normalized;
   }
 
   /**
@@ -89,6 +122,12 @@ class GeminiProvider extends BaseAIProvider {
 
     } catch (error) {
       console.error('Gemini API error:', error);
+      if (error.status === 404) {
+        throw new Error(
+          `Gemini generation failed: Model "${this.config.model}" is not available for the current API version. ` +
+          'Try one of: gemini-1.5-flash-latest, gemini-1.5-pro-latest, gemini-2.0-flash.'
+        );
+      }
       throw new Error(`Gemini generation failed: ${error.message}`);
     }
   }
@@ -135,6 +174,12 @@ class GeminiProvider extends BaseAIProvider {
 
     } catch (error) {
       console.error('Gemini streaming error:', error);
+      if (error.status === 404) {
+        throw new Error(
+          `Gemini streaming failed: Model "${this.config.model}" is not available for the current API version. ` +
+          'Try one of: gemini-1.5-flash-latest, gemini-1.5-pro-latest, gemini-2.0-flash.'
+        );
+      }
       throw new Error(`Gemini streaming failed: ${error.message}`);
     }
   }

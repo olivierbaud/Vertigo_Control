@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwYjdmYjUwLTZmNTItNDgwMi1iYWM5LWJiZGRiNTVkNjA3ZSIsImludGVncmF0b3JfaWQiOiI2MGI3ZmI1MC02ZjUyLTQ4MDItYmFjOS1iYmRkYjU1ZDYwN2UiLCJlbWFpbCI6InRlc3QxNzU5OTE3MjM4QGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU5OTE3MjQyLCJleHAiOjE3NjA1MjIwNDJ9.2il9lW_40d7aKJLvX6L_OfzZoQk6ta5ejA6f8J6F_nk\")",
+      "Bash(curl -X POST \"https://backend-production-baec.up.railway.app/api/projects\" -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d \"{\"\"name\"\":\"\"Test Project\"\",\"\"customer_name\"\":\"\"Acme\"\",\"\"location\"\":\"\"NY\"\"}\" -s)",
+      "Bash(curl:*)",
+      "Bash(Select-Object -Skip 125 -First 30)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
