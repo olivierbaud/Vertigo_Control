@@ -29,7 +29,7 @@ const MODEL_ALIASES = {
 /**
  * GeminiProvider
  * Google Gemini AI provider for GUI generation
- * Defaults to the widely available Gemini 1.5 Flash model
+ * Defaults to the widely available Gemini 2.5 Flash model
  */
 class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
@@ -268,7 +268,7 @@ class GeminiProvider extends BaseAIProvider {
       if (error.status === 404) {
         throw new Error(
           `Gemini generation failed: Model "${this.config.model}" is not available for the current API version. ` +
-          'Try one of: gemini-1.5-flash-latest, gemini-1.5-pro-latest, gemini-2.0-flash.'
+          'Try one of: gemini-flash-latest, gemini-2.5-flash, gemini-2.0-flash.'
         );
       }
       throw new Error(`Gemini generation failed: ${error.message}`);
@@ -297,7 +297,7 @@ class GeminiProvider extends BaseAIProvider {
       if (error.status === 404) {
         throw new Error(
           `Gemini streaming failed: Model "${this.config.model}" is not available for the current API version. ` +
-          'Try one of: gemini-1.5-flash-latest, gemini-1.5-pro-latest, gemini-2.0-flash.'
+          'Try one of: gemini-flash-latest, gemini-2.5-flash, gemini-2.0-flash.'
         );
       }
       throw new Error(`Gemini streaming failed: ${error.message}`);
