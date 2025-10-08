@@ -8,19 +8,24 @@ const crypto = require('crypto');
 class APIKeyEncryption {
   constructor() {
     this.algorithm = 'aes-256-gcm';
+    this.enabled = false;
 
     // Get encryption key from environment
     const keyHex = process.env.ENCRYPTION_KEY;
     if (!keyHex) {
-      throw new Error('ENCRYPTION_KEY environment variable not set');
+      console.warn('Warning: ENCRYPTION_KEY not set. BYOK feature disabled.');
+      return;
     }
 
     // Convert hex string to buffer (must be 32 bytes for AES-256)
     this.key = Buffer.from(keyHex, 'hex');
 
     if (this.key.length !== 32) {
-      throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+      console.warn('Warning: ENCRYPTION_KEY invalid length. BYOK feature disabled.');
+      return;
     }
+
+    this.enabled = true;
   }
 
   /**
@@ -29,6 +34,10 @@ class APIKeyEncryption {
    * @returns {string} - Encrypted string in format: iv:authTag:encrypted
    */
   encrypt(plaintext) {
+    if (!this.enabled) {
+      throw new Error('Encryption not available: ENCRYPTION_KEY not configured');
+    }
+
     // Generate random IV (initialization vector)
     const iv = crypto.randomBytes(16);
 
@@ -52,6 +61,10 @@ class APIKeyEncryption {
    * @returns {string} - Decrypted API key
    */
   decrypt(ciphertext) {
+    if (!this.enabled) {
+      throw new Error('Decryption not available: ENCRYPTION_KEY not configured');
+    }
+
     try {
       // Split the combined string
       const parts = ciphertext.split(':');
@@ -77,6 +90,14 @@ class APIKeyEncryption {
     } catch (error) {
       throw new Error('Decryption failed: ' + error.message);
     }
+  }
+
+  /**
+   * Check if encryption is enabled
+   * @returns {boolean}
+   */
+  isEnabled() {
+    return this.enabled;
   }
 
   /**
