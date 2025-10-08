@@ -25,7 +25,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:5173',  // Local Vite dev server
   'http://localhost:3001',  // Alternative local port
-  process.env.FRONTEND_URL,  // Production frontend URL
+  'https://vertigo-control-frontend.railway.app',  // Production frontend (update with your actual URL)
+  process.env.FRONTEND_URL,  // Production frontend URL from env
 ].filter(Boolean);  // Remove undefined values
 
 app.use(cors({
