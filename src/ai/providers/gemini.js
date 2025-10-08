@@ -3,16 +3,18 @@ const BaseAIProvider = require('./base');
 
 // Map legacy or shorthand model names to supported Gemini identifiers
 const MODEL_ALIASES = {
-  'gemini-pro': 'gemini-1.5-pro-latest',
-  'gemini-pro-latest': 'gemini-1.5-pro-latest',
-  'gemini-1.5-pro': 'gemini-1.5-pro-latest',
-  'gemini-1.5-pro-001': 'gemini-1.5-pro-latest',
-  'gemini-1.5-pro-002': 'gemini-1.5-pro-latest',
-  'gemini-flash': 'gemini-1.5-flash-latest',
-  'gemini-1.5-flash': 'gemini-1.5-flash-latest',
-  'gemini-1.5-flash-001': 'gemini-1.5-flash-latest',
-  'gemini-1.5-flash-002': 'gemini-1.5-flash-latest',
-  'gemini-2.0-flash-exp': 'gemini-2.0-flash',
+  'gemini-pro': 'gemini-1.5-pro',
+  'gemini-pro-latest': 'gemini-1.5-pro',
+  'gemini-1.5-pro': 'gemini-1.5-pro',
+  'gemini-1.5-pro-001': 'gemini-1.5-pro',
+  'gemini-1.5-pro-002': 'gemini-1.5-pro',
+  'gemini-1.5-pro-latest': 'gemini-1.5-pro',
+  'gemini-flash': 'gemini-1.5-flash',
+  'gemini-1.5-flash': 'gemini-1.5-flash',
+  'gemini-1.5-flash-001': 'gemini-1.5-flash',
+  'gemini-1.5-flash-002': 'gemini-1.5-flash',
+  'gemini-1.5-flash-latest': 'gemini-1.5-flash',
+  'gemini-2.0-flash-exp': 'gemini-2.0-flash-exp',
   'gemini-2.0-flash': 'gemini-2.0-flash'
 };
 
@@ -23,7 +25,7 @@ const MODEL_ALIASES = {
  */
 class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
-    const requestedModel = (config.model || 'gemini-1.5-flash').toLowerCase();
+    const requestedModel = (config.model || 'gemini-1.5-flash').toLowerCase().trim();
     const canonicalModel = MODEL_ALIASES[requestedModel] || requestedModel;
 
     super(apiKey, {
@@ -37,7 +39,7 @@ class GeminiProvider extends BaseAIProvider {
       throw new Error('Model name is required for Gemini provider');
     }
 
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.genAI = new GoogleGenerativeAI(apiKey, { apiVersion: 'v1' });
     this.model = this.genAI.getGenerativeModel({
       model: this.config.model
     });
@@ -53,6 +55,10 @@ class GeminiProvider extends BaseAIProvider {
     // Pricing per million tokens (as of Oct 2024)
     this.pricing = {
       'gemini-2.0-flash': {
+        input: 0.0,
+        output: 0.0
+      },
+      'gemini-2.0-flash-exp': {
         input: 0.0,
         output: 0.0
       },
