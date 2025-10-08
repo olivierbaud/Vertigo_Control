@@ -2,19 +2,28 @@ const BaseAIProvider = require('./base');
 
 // Map legacy or shorthand model names to supported Gemini identifiers
 const MODEL_ALIASES = {
-  'gemini-pro': 'gemini-1.5-pro-latest',
-  'gemini-pro-latest': 'gemini-1.5-pro-latest',
-  'gemini-1.5-pro': 'gemini-1.5-pro-latest',
-  'gemini-1.5-pro-001': 'gemini-1.5-pro-001',
-  'gemini-1.5-pro-002': 'gemini-1.5-pro-002',
-  'gemini-1.5-pro-latest': 'gemini-1.5-pro-latest',
-  'gemini-flash': 'gemini-1.5-flash-latest',
-  'gemini-1.5-flash': 'gemini-1.5-flash-latest',
-  'gemini-1.5-flash-001': 'gemini-1.5-flash-001',
-  'gemini-1.5-flash-002': 'gemini-1.5-flash-002',
-  'gemini-1.5-flash-latest': 'gemini-1.5-flash-latest',
+  // Legacy 1.5 names mapped to supported Gemini 2.x identifiers
+  'gemini-1.5-flash': 'gemini-2.5-flash',
+  'gemini-1.5-flash-001': 'gemini-2.5-flash',
+  'gemini-1.5-flash-002': 'gemini-2.5-flash',
+  'gemini-1.5-flash-latest': 'gemini-flash-latest',
+  'gemini-flash': 'gemini-2.5-flash',
+  // Pro model aliases
+  'gemini-1.5-pro': 'gemini-2.5-pro',
+  'gemini-1.5-pro-001': 'gemini-2.5-pro',
+  'gemini-1.5-pro-002': 'gemini-2.5-pro',
+  'gemini-1.5-pro-latest': 'gemini-pro-latest',
+  'gemini-pro': 'gemini-pro-latest',
+  // Existing identifiers that should pass through
+  'gemini-2.5-flash': 'gemini-2.5-flash',
+  'gemini-2.5-flash-latest': 'gemini-2.5-flash',
+  'gemini-flash-latest': 'gemini-flash-latest',
+  'gemini-2.5-pro': 'gemini-2.5-pro',
+  'gemini-pro-latest': 'gemini-pro-latest',
   'gemini-2.0-flash-exp': 'gemini-2.0-flash-exp',
-  'gemini-2.0-flash': 'gemini-2.0-flash'
+  'gemini-2.0-flash': 'gemini-2.0-flash',
+  'gemini-2.0-flash-001': 'gemini-2.0-flash',
+  'gemini-2.0-flash-lite': 'gemini-2.0-flash-lite'
 };
 
 /**
@@ -24,7 +33,7 @@ const MODEL_ALIASES = {
  */
 class GeminiProvider extends BaseAIProvider {
   constructor(apiKey, config = {}) {
-    const requestedModel = (config.model || 'gemini-1.5-flash-latest').toLowerCase().trim();
+    const requestedModel = (config.model || 'gemini-2.5-flash').toLowerCase().trim();
     const canonicalModel = MODEL_ALIASES[requestedModel] || requestedModel;
 
     super(apiKey, {
@@ -51,61 +60,79 @@ class GeminiProvider extends BaseAIProvider {
 
     // Pricing per million tokens (as of Oct 2024)
     this.pricing = {
+      'gemini-2.5-flash': {
+        input: 0.10,
+        output: 0.40
+      },
+      'gemini-flash-latest': {
+        input: 0.10,
+        output: 0.40
+      },
+      'gemini-2.5-pro': {
+        input: 5.00,
+        output: 15.00
+      },
+      'gemini-pro-latest': {
+        input: 5.00,
+        output: 15.00
+      },
       'gemini-2.0-flash': {
-        input: 0.0,
-        output: 0.0
+        input: 0.08,
+        output: 0.32
       },
-      'gemini-2.0-flash-exp': {
-        input: 0.0,
-        output: 0.0
-      },
-      'gemini-1.5-pro': {
-        input: 3.5,
-        output: 10.5
-      },
-      'gemini-1.5-flash': {
-        input: 0.075,
-        output: 0.30
+      'gemini-2.0-flash-lite': {
+        input: 0.05,
+        output: 0.20
       }
     };
 
     const pricingKey = this.getPricingKey(this.config.model);
-    this.currentPricing = this.pricing[pricingKey] || this.pricing['gemini-1.5-flash'];
+    this.currentPricing = this.pricing[pricingKey] || this.pricing['gemini-2.5-flash'];
   }
 
   /**
    * Determine pricing key ignoring version suffixes like "-latest" or "-002"
    */
-  getPricingKey(modelName) {
-    if (!modelName) return 'gemini-1.5-flash';
-    const normalized = modelName
-      .replace(/-latest$/i, '')
-      .replace(/-\d{3}$/i, '');
-    return normalized;
-  }
+    getPricingKey(modelName) {
+      if (!modelName) return 'gemini-2.5-flash';
+      const normalized = modelName.replace(/^models\//i, '').toLowerCase();
+
+      if (normalized.startsWith('gemini-flash-latest')) return 'gemini-flash-latest';
+      if (normalized.startsWith('gemini-2.5-flash')) return 'gemini-2.5-flash';
+      if (normalized.startsWith('gemini-2.5-pro')) return 'gemini-2.5-pro';
+      if (normalized.startsWith('gemini-pro')) return 'gemini-pro-latest';
+      if (normalized.startsWith('gemini-2.0-flash-lite')) return 'gemini-2.0-flash-lite';
+      if (normalized.startsWith('gemini-2.0-flash')) return 'gemini-2.0-flash';
+
+      return normalized.replace(/-preview.*$/i, '').replace(/-exp.*$/i, '');
+    }
 
   /**
    * Execute generateContent call against Gemini HTTP API (v1)
    */
   async generateContentRequest(prompt) {
-    const attempts = [
-      {
-        baseUrl: 'https://generativelanguage.googleapis.com/v1',
-        model: this.config.model
-      },
-      {
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-        model: this.config.model
-      }
-    ];
+      const attempts = [];
 
-    // If configured model is already a legacy name, don't push duplicate
-    if (!['gemini-pro', 'gemini-pro-vision'].includes(this.config.model)) {
-      attempts.push({
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-        model: 'gemini-pro'
-      });
-    }
+      const addAttempt = (baseUrl, model) => {
+        const key = `${baseUrl}::${model}`;
+        if (!attempts.some(entry => entry.key === key)) {
+          attempts.push({ key, baseUrl, model });
+        }
+      };
+
+      const preferredModels = [
+        this.config.model,
+        'gemini-flash-latest',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-pro-latest',
+        'gemini-2.5-pro'
+      ].filter(Boolean);
+
+      for (const model of preferredModels) {
+        addAttempt('https://generativelanguage.googleapis.com/v1', model);
+        addAttempt('https://generativelanguage.googleapis.com/v1beta', model);
+      }
 
     const body = {
       contents: [
