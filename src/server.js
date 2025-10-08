@@ -11,6 +11,7 @@ const controllerRoutes = require('./routes/controllers');
 const deviceRoutes = require('./routes/devices');
 const deviceControlRoutes = require('./routes/device-controls');
 const sceneRoutes = require('./routes/scenes');
+const imageRoutes = require('./routes/images');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,6 +45,7 @@ app.use('/api/projects/:projectId/controllers', controllerRoutes);
 app.use('/api/controllers/:controllerId/devices', deviceRoutes);
 app.use('/api/devices/:deviceId/controls', deviceControlRoutes);
 app.use('/api/controllers/:controllerId/scenes', sceneRoutes);
+app.use('/api/images', imageRoutes);
 
 // 404 handler
 app.use((req, res) => {
