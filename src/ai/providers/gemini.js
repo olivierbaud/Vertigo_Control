@@ -16,13 +16,19 @@ class GeminiProvider extends BaseAIProvider {
       model: config.model || 'gemini-1.5-flash-latest'
     });
 
+    this.genAI = new GoogleGenerativeAI(this.apiKey);
+
+    // List available models for debugging
+    this.listAvailableModels().catch(err => {
+      console.error('Failed to list models:', err.message);
+    });
+
     console.log('GeminiProvider initialized with model:', this.config.model);
 
     if (!this.config.model) {
       throw new Error('Model name is required for Gemini provider');
     }
 
-    this.genAI = new GoogleGenerativeAI(this.apiKey);
     this.model = this.genAI.getGenerativeModel({
       model: this.config.model
     });
@@ -188,6 +194,23 @@ class GeminiProvider extends BaseAIProvider {
       output: outputCost,
       total: inputCost + outputCost
     };
+  }
+
+  /**
+   * List available Gemini models
+   */
+  async listAvailableModels() {
+    try {
+      const models = await this.genAI.listModels();
+      console.log('Available Gemini models:');
+      models.forEach(model => {
+        console.log(`  - ${model.name} (supports: ${model.supportedGenerationMethods?.join(', ')})`);
+      });
+      return models;
+    } catch (error) {
+      console.error('Error listing models:', error.message);
+      throw error;
+    }
   }
 
   /**
