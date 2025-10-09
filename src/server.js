@@ -26,6 +26,7 @@ const allowedOrigins = [
   'http://localhost:5173',  // Local Vite dev server
   'http://localhost:3001',  // Alternative local port
   'https://vertigo-control-frontend.railway.app',  // Production frontend (update with your actual URL)
+  'https://frontend-production-4106.up.railway.app',
   process.env.FRONTEND_URL,  // Production frontend URL from env
 ].filter(Boolean);  // Remove undefined values
 
