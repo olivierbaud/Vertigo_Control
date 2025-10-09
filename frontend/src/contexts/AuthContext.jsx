@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authAPI.login({ email, password });
-      const { token, user: userData } = response.data;
+      const { token, integrator: userData } = response.data;
       
       // Store token and user data
       localStorage.setItem('token', token);
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     try {
       const response = await authAPI.register({ name, email, password });
-      const { token, user: userData } = response.data;
+      const { token, integrator: userData } = response.data;
       
       // Store token and user data
       localStorage.setItem('token', token);
