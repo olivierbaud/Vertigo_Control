@@ -19,18 +19,21 @@ const Dashboard = () => {
   const fetchProjects = async () => {
     try {
       const response = await projectsAPI.getAll();
-      const projectsData = response.data;
+      const projectsData = response.data.projects; // Correctly extract the array
       setProjects(projectsData);
 
       // Calculate stats
       let totalControllers = 0;
       let onlineControllers = 0;
 
-      for (const project of projectsData) {
-        const controllersRes = await projectsAPI.getControllers(project.id);
-        const controllers = controllersRes.data;
-        totalControllers += controllers.length;
-        onlineControllers += controllers.filter(c => c.status === 'online').length;
+      // Ensure projectsData is an array before iterating
+      if (Array.isArray(projectsData)) {
+        for (const project of projectsData) {
+          const controllersRes = await projectsAPI.getControllers(project.id);
+          const controllers = controllersRes.data.controllers; // Correctly extract the array
+          totalControllers += controllers.length;
+          onlineControllers += controllers.filter(c => c.status === 'online').length;
+        }
       }
 
       setStats({
