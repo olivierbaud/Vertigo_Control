@@ -20,7 +20,7 @@ const Projects = () => {
   const fetchProjects = async () => {
     try {
       const response = await projectsAPI.getAll();
-      setProjects(response.data);
+      setProjects(response.data.projects); // Correctly extract the array
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     } finally {
