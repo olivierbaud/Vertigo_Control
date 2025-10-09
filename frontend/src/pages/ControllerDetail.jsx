@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { controllersAPI, aiAPI, guiAPI } from '../utils/api';
+import GuiPreview from '../components/GuiPreview';
 
 const ControllerDetail = () => {
   const { controllerId } = useParams();
@@ -12,6 +13,7 @@ const ControllerDetail = () => {
   const [guiStatus, setGuiStatus] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState('claude');
   const [showSettings, setShowSettings] = useState(false);
+  const [previewKey, setPreviewKey] = useState(Date.now());
   const messagesEndRef = useRef(null);
 
   // Scroll to bottom of chat
@@ -86,6 +88,7 @@ const ControllerDetail = () => {
           });
           setIsStreaming(false);
           fetchGuiStatus(); // Refresh GUI status after AI response
+          setPreviewKey(Date.now()); // Refresh preview
         } else if (chunk.type === 'error') {
           console.error('AI error:', chunk.data);
           setIsStreaming(false);
@@ -326,8 +329,17 @@ const ControllerDetail = () => {
       {/* Right side: GUI Preview & Controls */}
       <div className="w-96 flex flex-col bg-gray-50">
         {/* Preview header */}
-        <div className="p-4 border-b border-gray-200 bg-white">
+        <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-900">GUI Preview & Controls</h3>
+          <button
+            onClick={() => setPreviewKey(Date.now())}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Refresh Preview"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </div>
 
         {/* Deploy/Sync Controls */}
@@ -393,13 +405,8 @@ const ControllerDetail = () => {
 
         {/* Preview area */}
         <div className="flex-1 overflow-auto p-4">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 min-h-full">
-            <p className="text-sm text-gray-500 text-center">
-              GUI preview will be rendered here
-            </p>
-            <p className="text-xs text-gray-400 text-center mt-2">
-              (Preview feature coming soon)
-            </p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-full">
+            <GuiPreview key={previewKey} controllerId={controllerId} />
           </div>
         </div>
       </div>
