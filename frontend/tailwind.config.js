@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // Enable dark mode based on the 'dark' class
   theme: {
     extend: {
       colors: {
@@ -19,6 +20,13 @@ export default {
           800: '#1e40af',
           900: '#1e3a8a',
         },
+        // Define dark mode specific colors if needed, or rely on Tailwind's default dark variants
+        dark: {
+          'bg-primary': '#1a202c',
+          'bg-secondary': '#2d3748',
+          'text-primary': '#e2e8f0',
+          'text-secondary': '#a0aec0',
+        }
       },
     },
   },
