@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
+import ProjectDetail from './pages/ProjectDetail';
 import ControllerDetail from './pages/ControllerDetail';
 
 function App() {
@@ -29,7 +30,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="projects" element={<Projects />} />
-            <Route path="projects/:projectId" element={<Projects />} />
+            <Route path="projects/:projectId" element={<ProjectDetail />} />
             <Route path="controllers/:controllerId" element={<ControllerDetail />} />
           </Route>
 
