@@ -1,35 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { controllersAPI } from '../utils/api';
+import { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useSingleControllerStatus } from '../hooks/useControllerStatus';
 import DeviceManagement from '../components/DeviceManagement';
 
 const ControllerDetailTabs = () => {
   const { controllerId } = useParams();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('devices');
-  const [controller, setController] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (controllerId) {
-      fetchController();
-    }
-  }, [controllerId]);
-
-  const fetchController = async () => {
-    try {
-      setLoading(true);
-      const response = await controllersAPI.getOne(controllerId);
-      setController(response.data.controller);
-    } catch (error) {
-      console.error('Failed to fetch controller:', error);
-      if (error.response?.status === 404) {
-        // Controller not found
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Use the hook for real-time controller status updates
+  const { controller, loading } = useSingleControllerStatus(controllerId, 10000);
 
   if (loading) {
     return (

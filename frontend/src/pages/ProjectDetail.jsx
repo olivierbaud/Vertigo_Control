@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { projectsAPI, controllersAPI } from '../utils/api';
+import { useControllerStatus } from '../hooks/useControllerStatus';
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [project, setProject] = useState(null);
-  const [controllers, setControllers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddControllerModal, setShowAddControllerModal] = useState(false);
   const [showConnectionKeyModal, setShowConnectionKeyModal] = useState(false);
@@ -18,6 +18,9 @@ const ProjectDetail = () => {
     name: '',
   });
 
+  // Use the hook for real-time controller status updates
+  const { controllers, refresh: refreshControllers } = useControllerStatus(projectId, 10000);
+
   useEffect(() => {
     fetchProjectData();
   }, [projectId]);
@@ -25,12 +28,9 @@ const ProjectDetail = () => {
   const fetchProjectData = async () => {
     try {
       setLoading(true);
-      const [projectRes, controllersRes] = await Promise.all([
-        projectsAPI.getOne(projectId),
-        projectsAPI.getControllers(projectId),
-      ]);
+      const projectRes = await projectsAPI.getOne(projectId);
       setProject(projectRes.data.project);
-      setControllers(controllersRes.data.controllers);
+      // Controllers are now managed by useControllerStatus hook
     } catch (error) {
       console.error('Failed to fetch project data:', error);
       // If project not found, redirect to projects page
@@ -55,7 +55,7 @@ const ProjectDetail = () => {
       setShowConnectionKeyModal(true);
 
       // Refresh the controller list
-      fetchProjectData();
+      refreshControllers();
     } catch (error) {
       console.error('Failed to create controller:', error);
       alert('Failed to create controller');
@@ -89,7 +89,7 @@ const ProjectDetail = () => {
       setShowEditControllerModal(false);
       setEditingController(null);
       setControllerFormData({ name: '' });
-      fetchProjectData();
+      refreshControllers();
     } catch (error) {
       console.error('Failed to update controller:', error);
       alert('Failed to update controller');
@@ -106,7 +106,7 @@ const ProjectDetail = () => {
 
     try {
       await controllersAPI.delete(controller.id);
-      fetchProjectData();
+      refreshControllers();
     } catch (error) {
       console.error('Failed to delete controller:', error);
       alert('Failed to delete controller');
