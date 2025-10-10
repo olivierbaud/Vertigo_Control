@@ -81,22 +81,22 @@ function AiChat({ controllerId }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-300px)] bg-white rounded-lg shadow-lg">
+    <div className="flex flex-col h-[calc(100vh-300px)] bg-white dark:bg-gray-800 rounded-lg shadow-lg dark:shadow-none border dark:border-gray-700">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-lg">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 text-white p-4 rounded-t-lg">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-xl font-semibold">AI Assistant</h2>
-            <p className="text-sm text-blue-100">
+            <p className="text-sm text-primary-100 dark:text-primary-200">
               Describe your GUI and I'll generate it for you
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-blue-100">Provider:</label>
+            <label className="text-sm text-primary-100 dark:text-primary-200">Provider:</label>
             <select
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
-              className="px-3 py-1 rounded bg-white text-gray-900 text-sm font-medium"
+              className="px-3 py-1 rounded bg-white dark:bg-gray-800 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm font-medium border dark:border-gray-600"
               disabled={loading}
             >
               <option value="gemini">Gemini 2.5 Flash (Free)</option>
@@ -108,12 +108,12 @@ function AiChat({ controllerId }) {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
             <div className="text-4xl mb-4">💬</div>
-            <p className="text-lg font-medium mb-2">Start a conversation</p>
-            <p className="text-sm">
+            <p className="text-lg font-medium mb-2 dark:text-gray-300">Start a conversation</p>
+            <p className="text-sm dark:text-gray-400">
               Try: "Create a main page with volume controls and scene buttons"
             </p>
           </div>
@@ -129,16 +129,16 @@ function AiChat({ controllerId }) {
             <div
               className={`max-w-[80%] rounded-lg p-4 ${
                 message.role === 'user'
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-primary-600 dark:bg-primary-700 text-white'
                   : message.role === 'assistant'
-                  ? 'bg-white border border-gray-200 shadow-sm'
-                  : 'bg-yellow-50 border border-yellow-200'
+                  ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none'
+                  : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
               }`}
             >
               {/* Message Header */}
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-xs font-semibold ${
-                  message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                  message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
                 }`}>
                   {message.role === 'user' ? 'You' : message.role === 'assistant' ? 'AI Assistant' : 'System'}
                 </span>
@@ -151,24 +151,24 @@ function AiChat({ controllerId }) {
 
               {/* Message Content */}
               <div className={`whitespace-pre-wrap ${
-                message.role === 'user' ? 'text-white' : 'text-gray-800'
+                message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'
               }`}>
                 {message.content}
               </div>
 
               {/* Modified Files */}
               {message.modifiedFiles && message.modifiedFiles.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <p className="text-xs font-semibold text-gray-600 mb-2">
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
                     Modified Files:
                   </p>
                   <div className="space-y-1">
                     {message.modifiedFiles.map((file, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between text-xs bg-gray-50 px-2 py-1 rounded"
+                        className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded"
                       >
-                        <span className="text-gray-700 font-mono">{file}</span>
+                        <span className="text-gray-700 dark:text-gray-300 font-mono">{file}</span>
                         <button
                           onClick={() => copyToClipboard(file)}
                           className="text-blue-500 hover:text-blue-700"
@@ -199,8 +199,8 @@ function AiChat({ controllerId }) {
 
               {/* Usage Stats */}
               {message.usage && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                     <span>
                       Tokens: {message.usage.totalTokens?.toLocaleString()}
                     </span>
@@ -219,7 +219,7 @@ function AiChat({ controllerId }) {
                 className={`mt-2 text-xs ${
                   message.role === 'user'
                     ? 'text-blue-100 hover:text-white'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Copy message
@@ -230,10 +230,10 @@ function AiChat({ controllerId }) {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm dark:shadow-none">
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   AI is thinking...
                 </span>
               </div>
@@ -252,14 +252,14 @@ function AiChat({ controllerId }) {
       )}
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 p-4 bg-white rounded-b-lg">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800 rounded-b-lg">
         <div className="flex gap-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Describe your GUI design... (Press Enter to send, Shift+Enter for new line)"
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             rows="3"
             disabled={loading}
           />
@@ -268,8 +268,8 @@ function AiChat({ controllerId }) {
             disabled={loading || !input.trim()}
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
               loading || !input.trim()
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
+                ? 'bg-gray-300 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                : 'bg-primary-600 dark:bg-primary-700 text-white hover:bg-primary-600 dark:bg-primary-700'
             }`}
           >
             {loading ? (
@@ -299,7 +299,7 @@ function AiChat({ controllerId }) {
         </div>
 
         {/* Helper Text */}
-        <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+        <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <span>
             💡 Example: "Add a volume slider for Main Audio and buttons for Meeting Start and Meeting End scenes"
           </span>

@@ -139,7 +139,7 @@ function DeploySyncControls({ controllerId }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-none p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-gray-200 rounded w-1/4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
@@ -160,7 +160,7 @@ function DeploySyncControls({ controllerId }) {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-yellow-800">DRAFT</h3>
             <span className={`px-2 py-1 rounded text-xs font-medium ${
-              hasDraftChanges ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-600'
+              hasDraftChanges ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-600 dark:text-gray-400'
             }`}>
               {hasDraftChanges ? 'Modified' : 'Clean'}
             </span>
@@ -190,7 +190,7 @@ function DeploySyncControls({ controllerId }) {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-green-800">LIVE</h3>
             <span className={`px-2 py-1 rounded text-xs font-medium ${
-              status?.liveVersion ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'
+              status?.liveVersion ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600 dark:text-gray-400'
             }`}>
               {status?.liveVersion ? `v${status.liveVersion}` : 'Not synced'}
             </span>
@@ -205,7 +205,7 @@ function DeploySyncControls({ controllerId }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-none p-6">
         <h3 className="text-lg font-semibold mb-4">Actions</h3>
 
         <div className="grid grid-cols-2 gap-4">
@@ -216,7 +216,7 @@ function DeploySyncControls({ controllerId }) {
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
               !hasDraftChanges || deploying
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-primary-600 dark:bg-primary-700 text-white hover:bg-primary-600 dark:bg-primary-700'
             }`}
           >
             {deploying ? (
@@ -274,7 +274,7 @@ function DeploySyncControls({ controllerId }) {
           {/* Version History Button */}
           <button
             onClick={() => setShowVersionHistory(!showVersionHistory)}
-            className="px-6 py-3 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 transition-colors"
+            className="px-6 py-3 rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 border border-gray-300 dark:border-gray-600 transition-colors"
           >
             <div>
               <div className="font-semibold">Version History</div>
@@ -299,21 +299,21 @@ function DeploySyncControls({ controllerId }) {
 
       {/* Version History */}
       {showVersionHistory && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-none p-6">
           <h3 className="text-lg font-semibold mb-4">Version History</h3>
 
           {versions.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No version history yet</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No version history yet</p>
           ) : (
             <div className="space-y-2">
               {versions.map((v) => (
                 <div
                   key={v.version}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50"
                 >
                   <div>
                     <div className="font-medium">Version {v.version}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       {new Date(v.created_at).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
@@ -322,7 +322,7 @@ function DeploySyncControls({ controllerId }) {
                   </div>
                   <button
                     onClick={() => handleRollback(v.version)}
-                    className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    className="px-4 py-2 text-sm bg-primary-600 dark:bg-primary-700 text-white rounded hover:bg-primary-600 dark:bg-primary-700 transition-colors"
                   >
                     Rollback
                   </button>
@@ -336,15 +336,15 @@ function DeploySyncControls({ controllerId }) {
       {/* Discard Confirmation Modal */}
       {showDiscardConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-semibold mb-4">Discard Draft Changes?</h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               This will delete all draft files and revert to the deployed version. This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowDiscardConfirm(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50"
               >
                 Cancel
               </button>
@@ -360,15 +360,15 @@ function DeploySyncControls({ controllerId }) {
       )}
 
       {/* Workflow Diagram */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Workflow</h3>
+      <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Workflow</h3>
         <div className="flex items-center justify-center gap-4 text-sm">
           <div className="text-center">
             <div className="w-16 h-16 bg-yellow-100 border-2 border-yellow-400 rounded-full flex items-center justify-center mb-2">
               <span className="text-2xl">✏️</span>
             </div>
             <div className="font-medium">DRAFT</div>
-            <div className="text-xs text-gray-500">AI modifies</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">AI modifies</div>
           </div>
 
           <div className="text-gray-400">
@@ -382,7 +382,7 @@ function DeploySyncControls({ controllerId }) {
               <span className="text-2xl">📦</span>
             </div>
             <div className="font-medium">DEPLOYED</div>
-            <div className="text-xs text-gray-500">Review & approve</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Review & approve</div>
           </div>
 
           <div className="text-gray-400">
@@ -396,7 +396,7 @@ function DeploySyncControls({ controllerId }) {
               <span className="text-2xl">🚀</span>
             </div>
             <div className="font-medium">LIVE</div>
-            <div className="text-xs text-gray-500">On controller</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">On controller</div>
           </div>
         </div>
       </div>
