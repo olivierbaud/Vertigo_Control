@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSingleControllerStatus } from '../hooks/useControllerStatus';
 import DeviceManagement from '../components/DeviceManagement';
+import SceneManagement from '../components/SceneManagement';
+import AiChat from '../components/AiChat';
+import DeploySyncControls from '../components/DeploySyncControls';
 
 const ControllerDetailTabs = () => {
   const { controllerId } = useParams();
@@ -36,6 +39,7 @@ const ControllerDetailTabs = () => {
     { id: 'devices', label: 'Devices', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z' },
     { id: 'scenes', label: 'Scenes', icon: 'M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z' },
     { id: 'ai', label: 'AI Chat', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+    { id: 'gui', label: 'GUI Deploy', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' },
   ];
 
   return (
@@ -106,27 +110,15 @@ const ControllerDetailTabs = () => {
         )}
 
         {activeTab === 'scenes' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-none p-12 text-center border dark:border-gray-700">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-            </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Scene Management</h3>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              Scene management coming soon. Create automation sequences for your devices.
-            </p>
-          </div>
+          <SceneManagement controllerId={controllerId} />
         )}
 
         {activeTab === 'ai' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-none p-12 text-center border dark:border-gray-700">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">AI-Powered GUI Design</h3>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              AI chat interface coming soon. Design touch panel interfaces with natural language.
-            </p>
-          </div>
+          <AiChat controllerId={controllerId} />
+        )}
+
+        {activeTab === 'gui' && (
+          <DeploySyncControls controllerId={controllerId} />
         )}
       </div>
     </div>
