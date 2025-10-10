@@ -36,7 +36,7 @@ Instead of learning complex programming languages and device protocols, users si
 - **Phase 1 (Weeks 1-4):** Status: **Completed (cloud foundation verified in repo)** - Platform setup, authentication, multi-tenant schema, REST APIs
 - **Phase 2 (Weeks 5-8):** Status: **Blocked on control-system runtime** - Cloud device and scene APIs exist here; NUC runtime progress tracked externally
 - **Phase 3 (Weeks 9-12):** Status: **Completed (cloud features implemented)** - AI provider stack, file-based GUI workflow, deploy/sync endpoints; on-prem sync handler pending
-- **Phase 4 (Weeks 13-16):** Status: **In Progress (65% complete)** - User interfaces (web dashboard implemented, NUC shell pending)
+- **Phase 4 (Weeks 13-16):** Status: **In Progress (55% complete)** - User interfaces (web dashboard structure implemented, AI chat UI and scene management pending, NUC shell pending)
 - **Phase 5 (Weeks 17-20):** Status: **Not Started** - Expansion + database migration
 - **Phase 6 (Weeks 21-24):** Status: **Not Started** - Launch & iterate
 
@@ -320,7 +320,7 @@ Instead of learning complex programming languages and device protocols, users si
 ## Sprint 7: Cloud Dashboard with AI Chat
 **Goal:** Web interface for integrators with AI assistant and manual sync controls
 
-### Week 1: Frontend Foundation ✅ COMPLETED
+### Week 1: Frontend Foundation ⚠️ PARTIALLY COMPLETED
 
 - ✅ **React Application Setup**
   - ✅ Initialize React app (Vite)
@@ -353,6 +353,14 @@ Instead of learning complex programming languages and device protocols, users si
 - ✅ Hover-reveal action buttons on cards
 - ✅ Responsive design for all pages
 - ✅ Dark mode support (CSS classes ready)
+
+**Missing Frontend Features (Backend Complete):**
+- ❌ AI Chat Interface (backend ready, UI not implemented)
+- ❌ Scene Management UI (backend ready, UI not implemented)
+- ❌ Device Controls Mapping UI (backend ready, UI not implemented)
+- ⏸️ GUI Preview Component (placeholder only)
+- ❌ Version History Viewer (backend ready, UI not implemented)
+- ❌ Image Upload UI (backend ready, UI not implemented)
 
 ### Week 2: AI Chat Interface with Manual Sync UI
 

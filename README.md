@@ -2,7 +2,7 @@
 
 > Cloud-connected control system that enables non-technical users to program professional AV and building automation equipment using natural language conversations with AI.
 
-**Status:** Phase 4 In Progress (Sprint 7 Week 1 Complete - 65%) ✅
+**Status:** Phase 4 In Progress (Sprint 7 Partially Complete - 55%) ⚠️
 **Deployment:** https://backend-production-baec.up.railway.app
 **Version:** 1.0.0-beta
 
@@ -464,11 +464,20 @@ See **[RAILWAY_SETUP.md](./RAILWAY_SETUP.md)** for detailed setup.
 - ✅ Image upload (with R2)
 - ✅ Usage tracking
 
-### Next Up (Sprint 6-7)
+### Next Up (Sprint 7-8)
 
-- 🔄 Web Dashboard (React)
-- 🔄 NUC Touch GUI
-- 🔄 Additional device drivers
+- ⚠️ **Web Dashboard** (Structure complete, missing: AI chat UI, scene management, controls mapping)
+- 🔄 **NUC Touch GUI** (Planned for Sprint 8)
+- 🔄 **Additional device drivers** (Planned for Sprint 9)
+
+### Missing Frontend Components (Backend Ready)
+
+- ❌ **AI Chat Interface** - Backend fully implemented with streaming, UI not started
+- ❌ **Scene Management UI** - Full CRUD API ready, no frontend components
+- ❌ **Device Controls Mapping UI** - API complete, mapping interface needed
+- ⏸️ **GUI Preview** - Placeholder component only
+- ❌ **Version History Viewer** - Rollback API ready, UI missing
+- ❌ **Image Upload UI** - Cloudflare R2 integrated, upload component needed
 
 ---
 
