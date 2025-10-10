@@ -7,7 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
-import ControllerDetail from './pages/ControllerDetail';
+import ControllerDetailTabs from './pages/ControllerDetailTabs';
 
 function App() {
   return (
@@ -31,7 +31,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="projects" element={<Projects />} />
             <Route path="projects/:projectId" element={<ProjectDetail />} />
-            <Route path="controllers/:controllerId" element={<ControllerDetail />} />
+            <Route path="controllers/:controllerId" element={<ControllerDetailTabs />} />
           </Route>
 
           {/* Catch all - redirect to dashboard */}
