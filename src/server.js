@@ -8,6 +8,7 @@ const WebSocketServer = require('./websocket/server');
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const controllerRoutes = require('./routes/controllers');
+const controllerStandaloneRoutes = require('./routes/controller-standalone');
 const deviceRoutes = require('./routes/devices');
 const deviceControlRoutes = require('./routes/device-controls');
 const sceneRoutes = require('./routes/scenes');
@@ -67,11 +68,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/controllers', controllerRoutes);
 app.use('/api/controllers/:controllerId/devices', deviceRoutes);
-app.use('/api/devices/:deviceId/controls', deviceControlRoutes);
 app.use('/api/controllers/:controllerId/scenes', sceneRoutes);
-app.use('/api/images', imageRoutes);
 app.use('/api/controllers/:controllerId/ai', aiRoutes);
 app.use('/api/controllers/:controllerId/gui', guiRoutes);
+app.use('/api/controllers', controllerStandaloneRoutes);  // Standalone controller operations
+app.use('/api/devices/:deviceId/controls', deviceControlRoutes);
+app.use('/api/images', imageRoutes);
 app.use('/api/ai', aiRoutes);
 
 // 404 handler

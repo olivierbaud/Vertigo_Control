@@ -11,7 +11,9 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showAddControllerModal, setShowAddControllerModal] = useState(false);
   const [showConnectionKeyModal, setShowConnectionKeyModal] = useState(false);
+  const [showEditControllerModal, setShowEditControllerModal] = useState(false);
   const [newControllerKey, setNewControllerKey] = useState(null);
+  const [editingController, setEditingController] = useState(null);
   const [controllerFormData, setControllerFormData] = useState({
     name: '',
   });
@@ -70,6 +72,45 @@ const ProjectDetail = () => {
   const handleCloseConnectionKeyModal = () => {
     setShowConnectionKeyModal(false);
     setNewControllerKey(null);
+  };
+
+  const handleEditController = (controller, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingController(controller);
+    setControllerFormData({ name: controller.name });
+    setShowEditControllerModal(true);
+  };
+
+  const handleUpdateController = async (e) => {
+    e.preventDefault();
+    try {
+      await controllersAPI.update(editingController.id, controllerFormData);
+      setShowEditControllerModal(false);
+      setEditingController(null);
+      setControllerFormData({ name: '' });
+      fetchProjectData();
+    } catch (error) {
+      console.error('Failed to update controller:', error);
+      alert('Failed to update controller');
+    }
+  };
+
+  const handleDeleteController = async (controller, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!window.confirm(`Are you sure you want to delete controller "${controller.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await controllersAPI.delete(controller.id);
+      fetchProjectData();
+    } catch (error) {
+      console.error('Failed to delete controller:', error);
+      alert('Failed to delete controller');
+    }
   };
 
   if (loading) {
@@ -271,48 +312,68 @@ const ProjectDetail = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {controllers.map((controller) => (
-                  <Link
-                    key={controller.id}
-                    to={`/controllers/${controller.id}`}
-                    className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="p-3 bg-primary-100 rounded-lg">
-                        <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                        </svg>
-                      </div>
-                      <div className="flex items-center">
-                        <span className={`
-                          inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                          ${controller.status === 'online'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                          }
-                        `}>
+                  <div key={controller.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 relative group">
+                    <Link to={`/controllers/${controller.id}`} className="block">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 bg-primary-100 rounded-lg">
+                          <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                          </svg>
+                        </div>
+                        <div className="flex items-center">
                           <span className={`
-                            w-2 h-2 mr-1 rounded-full
-                            ${controller.status === 'online' ? 'bg-green-400' : 'bg-gray-400'}
-                          `}></span>
-                          {controller.status}
-                        </span>
+                            inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            ${controller.status === 'online'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                            }
+                          `}>
+                            <span className={`
+                              w-2 h-2 mr-1 rounded-full
+                              ${controller.status === 'online' ? 'bg-green-400' : 'bg-gray-400'}
+                            `}></span>
+                            {controller.status}
+                          </span>
+                        </div>
                       </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{controller.name}</h3>
+                      {controller.ip_address && (
+                        <p className="text-sm text-gray-600 mb-1">
+                          <span className="font-medium">IP:</span> {controller.ip_address}
+                        </p>
+                      )}
+                      <div className="pt-4 border-t border-gray-200 mt-4">
+                        <p className="text-xs text-gray-500">
+                          {controller.last_seen
+                            ? `Last seen ${new Date(controller.last_seen).toLocaleString()}`
+                            : 'Never connected'
+                          }
+                        </p>
+                      </div>
+                    </Link>
+
+                    {/* Action Buttons - Show on hover */}
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                      <button
+                        onClick={(e) => handleEditController(controller, e)}
+                        className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+                        title="Edit controller"
+                      >
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteController(controller, e)}
+                        className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50 transition-colors"
+                        title="Delete controller"
+                      >
+                        <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{controller.name}</h3>
-                    {controller.ip_address && (
-                      <p className="text-sm text-gray-600 mb-1">
-                        <span className="font-medium">IP:</span> {controller.ip_address}
-                      </p>
-                    )}
-                    <div className="pt-4 border-t border-gray-200 mt-4">
-                      <p className="text-xs text-gray-500">
-                        {controller.last_seen
-                          ? `Last seen ${new Date(controller.last_seen).toLocaleString()}`
-                          : 'Never connected'
-                        }
-                      </p>
-                    </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -388,6 +449,65 @@ const ProjectDetail = () => {
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   Add Controller
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Controller Modal */}
+      {showEditControllerModal && editingController && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Edit Controller</h2>
+              <button
+                onClick={() => {
+                  setShowEditControllerModal(false);
+                  setEditingController(null);
+                  setControllerFormData({ name: '' });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateController} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Controller Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={controllerFormData.name}
+                  onChange={(e) => setControllerFormData({ ...controllerFormData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Main Building Controller"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditControllerModal(false);
+                    setEditingController(null);
+                    setControllerFormData({ name: '' });
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>
