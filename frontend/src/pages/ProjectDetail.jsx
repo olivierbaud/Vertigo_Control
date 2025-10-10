@@ -10,6 +10,8 @@ const ProjectDetail = () => {
   const [controllers, setControllers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddControllerModal, setShowAddControllerModal] = useState(false);
+  const [showConnectionKeyModal, setShowConnectionKeyModal] = useState(false);
+  const [newControllerKey, setNewControllerKey] = useState(null);
   const [controllerFormData, setControllerFormData] = useState({
     name: '',
   });
@@ -41,14 +43,33 @@ const ProjectDetail = () => {
   const handleAddController = async (e) => {
     e.preventDefault();
     try {
-      await projectsAPI.createController(projectId, controllerFormData);
+      const response = await projectsAPI.createController(projectId, controllerFormData);
+      const controller = response.data.controller;
+
+      // Close the add modal and show the connection key modal
       setShowAddControllerModal(false);
       setControllerFormData({ name: '' });
+      setNewControllerKey(controller);
+      setShowConnectionKeyModal(true);
+
+      // Refresh the controller list
       fetchProjectData();
     } catch (error) {
       console.error('Failed to create controller:', error);
       alert('Failed to create controller');
     }
+  };
+
+  const handleCopyConnectionKey = () => {
+    if (newControllerKey?.connection_key) {
+      navigator.clipboard.writeText(newControllerKey.connection_key);
+      alert('Connection key copied to clipboard!');
+    }
+  };
+
+  const handleCloseConnectionKeyModal = () => {
+    setShowConnectionKeyModal(false);
+    setNewControllerKey(null);
   };
 
   if (loading) {
@@ -370,6 +391,103 @@ const ProjectDetail = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Connection Key Modal */}
+      {showConnectionKeyModal && newControllerKey && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg mr-3">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">Controller Created!</h2>
+              </div>
+              <button
+                onClick={handleCloseConnectionKeyModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Controller <span className="font-semibold">{newControllerKey.name}</span> has been created successfully.
+                </p>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex">
+                  <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium mb-1">Important: Save this connection key!</p>
+                    <p>You'll need this key to provision your NUC controller. This key will not be shown again.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Connection Key
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={newControllerKey.connection_key}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCopyConnectionKey}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center"
+                  >
+                    <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium mb-1">Next Steps:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Copy the connection key</li>
+                      <li>SSH into your NUC controller</li>
+                      <li>Run the provisioning command with this key</li>
+                      <li>The controller will connect automatically</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseConnectionKeyModal}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
