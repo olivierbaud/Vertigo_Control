@@ -115,6 +115,10 @@ class WebSocketServer {
           this.handleHeartbeat(ws);
           break;
 
+        case 'request_full_sync':
+          this.handleRequestFullSync(ws);
+          break;
+
         case 'status_update':
           this.handleStatusUpdate(ws, message.data);
           break;
@@ -150,14 +154,71 @@ class WebSocketServer {
       'UPDATE controllers SET last_seen = NOW() WHERE id = $1',
       [ws.controllerId]
     ).catch(err => console.error('Heartbeat update error:', err));
-    
+
     // Send acknowledgment
     this.sendToController(ws.controllerId, {
       type: 'heartbeat_ack',
       timestamp: new Date().toISOString()
     });
   }
-  
+
+  async handleRequestFullSync(ws) {
+    console.log(`Full sync requested by controller ${ws.controllerName} (${ws.controllerId})`);
+
+    try {
+      // Query all devices for this controller
+      const devicesResult = await pool.query(
+        'SELECT device_id, name, type, connection_config, status FROM devices WHERE controller_id = $1',
+        [ws.controllerId]
+      );
+
+      // Query all scenes for this controller
+      const scenesResult = await pool.query(
+        'SELECT scene_id, name, description, steps, continue_on_error FROM scenes WHERE controller_id = $1',
+        [ws.controllerId]
+      );
+
+      // Transform devices to match NUC expected format
+      const devices = devicesResult.rows.map(d => ({
+        device_id: d.device_id,
+        name: d.name,
+        type: d.type,
+        connection_config: d.connection_config,
+        status: d.status || 'unknown'
+      }));
+
+      // Transform scenes to match NUC expected format
+      const scenes = scenesResult.rows.map(s => ({
+        scene_id: s.scene_id,
+        name: s.name,
+        description: s.description,
+        steps: s.steps, // Should already be JSON
+        continue_on_error: s.continue_on_error
+      }));
+
+      // Send full sync response
+      this.sendToController(ws.controllerId, {
+        type: 'full_sync',
+        timestamp: new Date().toISOString(),
+        data: {
+          devices: devices,
+          scenes: scenes
+        }
+      });
+
+      console.log(`✓ Full sync sent to ${ws.controllerName}: ${devices.length} devices, ${scenes.length} scenes`);
+
+    } catch (error) {
+      console.error(`Full sync error for ${ws.controllerName}:`, error);
+      // Don't crash - send error response
+      this.sendToController(ws.controllerId, {
+        type: 'error',
+        timestamp: new Date().toISOString(),
+        message: 'Full sync failed: ' + error.message
+      });
+    }
+  }
+
   handleStatusUpdate(ws, data) {
     console.log(`Status update from ${ws.controllerName}:`, data);
     // Store status in database if needed
