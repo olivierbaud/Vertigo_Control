@@ -10,6 +10,7 @@ const projectRoutes = require('./routes/projects');
 const controllerRoutes = require('./routes/controllers');
 const controllerStandaloneRoutes = require('./routes/controller-standalone');
 const deviceRoutes = require('./routes/devices');
+const devicesDirectRoutes = require('./routes/devices-direct');
 const deviceControlRoutes = require('./routes/device-controls');
 const sceneRoutes = require('./routes/scenes');
 const imageRoutes = require('./routes/images');
@@ -73,6 +74,7 @@ app.use('/api/controllers/:controllerId/ai', aiRoutes);
 app.use('/api/controllers/:controllerId/gui', guiRoutes);
 app.use('/api/controllers', controllerStandaloneRoutes);  // Standalone controller operations
 app.use('/api/devices/:deviceId/controls', deviceControlRoutes);
+app.use('/api/devices', devicesDirectRoutes);  // Direct device operations (by device ID)
 app.use('/api/images', imageRoutes);
 app.use('/api/ai', aiRoutes);
 
