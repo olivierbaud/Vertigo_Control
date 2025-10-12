@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github-dark.css';
 import api from '../utils/api';
 
 function AiChat({ controllerId }) {
@@ -150,10 +153,18 @@ function AiChat({ controllerId }) {
               </div>
 
               {/* Message Content */}
-              <div className={`whitespace-pre-wrap ${
+              <div className={`${
                 message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'
               }`}>
-                {message.content}
+                {message.role === 'assistant' ? (
+                  <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100">
+                    <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="whitespace-pre-wrap">{message.content}</div>
+                )}
               </div>
 
               {/* Modified Files */}

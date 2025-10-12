@@ -7,6 +7,7 @@ function DeploySyncControls({ controllerId }) {
   const [loading, setLoading] = useState(true);
   const [deploying, setDeploying] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [error, setError] = useState('');
@@ -258,17 +259,24 @@ function DeploySyncControls({ controllerId }) {
           {/* Discard Button */}
           <button
             onClick={() => setShowDiscardConfirm(true)}
-            disabled={!hasDraftChanges}
+            disabled={!hasDraftChanges || discarding}
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-              !hasDraftChanges
+              !hasDraftChanges || discarding
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 : 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-300'
             }`}
           >
-            <div>
-              <div className="font-semibold">Discard Changes</div>
-              <div className="text-xs opacity-80">Revert to deployed</div>
-            </div>
+            {discarding ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700"></div>
+                <span>Discarding...</span>
+              </div>
+            ) : (
+              <div>
+                <div className="font-semibold">Discard Changes</div>
+                <div className="text-xs opacity-80">Revert to deployed</div>
+              </div>
+            )}
           </button>
 
           {/* Version History Button */}
