@@ -16,6 +16,7 @@ const sceneRoutes = require('./routes/scenes');
 const imageRoutes = require('./routes/images');
 const aiRoutes = require('./routes/ai');
 const guiRoutes = require('./routes/gui');
+const driverRoutes = require('./routes/drivers');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -77,6 +78,7 @@ app.use('/api/devices/:deviceId/controls', deviceControlRoutes);
 app.use('/api/devices', devicesDirectRoutes);  // Direct device operations (by device ID)
 app.use('/api/images', imageRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/drivers', driverRoutes);
 
 // 404 handler
 app.use((req, res) => {
