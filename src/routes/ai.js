@@ -36,7 +36,10 @@ router.post('/chat', async (req, res) => {
     );
 
     if (controllerCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Controller not found' });
+      return res.status(404).json({
+        error: 'Controller not found',
+        message: 'This controller does not exist or you do not have permission to access it.'
+      });
     }
 
     // Build context
@@ -96,13 +99,20 @@ router.post('/chat', async (req, res) => {
     if (error.message.includes('No API key')) {
       return res.status(503).json({
         error: 'AI provider not configured',
+        message: 'No API key available for this provider. Please configure an API key in settings or contact support.'
+      });
+    }
+
+    if (error.message.includes('Model') && error.message.includes('not available')) {
+      return res.status(503).json({
+        error: 'AI provider error',
         message: error.message
       });
     }
 
     res.status(500).json({
       error: 'AI generation failed',
-      message: error.message
+      message: error.message || 'An unexpected error occurred while generating the response.'
     });
   }
 });
