@@ -54,12 +54,13 @@ function AiChat({ controllerId }) {
       }
     } catch (err) {
       console.error('AI chat error:', err);
-      setError(err.response?.data?.error || 'Failed to communicate with AI');
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to communicate with AI';
+      setError(errorMsg);
 
-      // Add error message
+      // Add error message with more details
       const errorMessage = {
         role: 'system',
-        content: `Error: ${err.response?.data?.error || 'Failed to communicate with AI'}`,
+        content: `Error: ${errorMsg}${err.response?.data?.details ? '\n\nDetails: ' + err.response.data.details : ''}`,
         timestamp: new Date().toISOString()
       };
       setMessages(prev => [...prev, errorMessage]);
