@@ -33,7 +33,7 @@ function AiChat({ controllerId }) {
     setError('');
 
     try {
-      const response = await api.post(`/api/controllers/${controllerId}/ai/chat`, {
+      const response = await api.post(`/controllers/${controllerId}/ai/chat`, {
         prompt: input,
         provider: provider
       });
