@@ -143,6 +143,42 @@ class OpenAIProvider extends BaseAIProvider {
   }
 
   /**
+   * Send a chat message and get a response
+   */
+  async chat(messages) {
+    try {
+      const response = await this.client.chat.completions.create({
+        model: this.config.model,
+        max_tokens: this.config.maxTokens,
+        temperature: this.config.temperature,
+        messages: messages.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
+      });
+
+      const responseText = response.choices[0].message.content;
+
+      // Track usage
+      const usage = {
+        inputTokens: response.usage.prompt_tokens,
+        outputTokens: response.usage.completion_tokens,
+        totalTokens: response.usage.total_tokens,
+        cost: this.calculateCost(response.usage.prompt_tokens, response.usage.completion_tokens)
+      };
+
+      return {
+        content: responseText,
+        usage
+      };
+
+    } catch (error) {
+      console.error('OpenAI chat error:', error);
+      throw new Error(`OpenAI chat failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Estimate token count for a request
    * OpenAI uses ~4 chars per token as approximation
    */

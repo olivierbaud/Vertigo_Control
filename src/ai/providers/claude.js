@@ -120,6 +120,50 @@ class ClaudeProvider extends BaseAIProvider {
   }
 
   /**
+   * Send a chat message and get a response
+   */
+  async chat(messages) {
+    try {
+      // Separate system messages from user/assistant messages
+      const systemMessages = messages.filter(m => m.role === 'system');
+      const conversationMessages = messages.filter(m => m.role !== 'system');
+
+      // Claude expects a single system parameter, not in messages array
+      const systemPrompt = systemMessages.map(m => m.content).join('\n\n');
+
+      const response = await this.client.messages.create({
+        model: this.config.model,
+        max_tokens: this.config.maxTokens,
+        temperature: this.config.temperature,
+        system: systemPrompt || undefined,
+        messages: conversationMessages.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
+      });
+
+      const responseText = response.content[0].text;
+
+      // Track usage
+      const usage = {
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+        totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+        cost: this.calculateCost(response.usage.input_tokens, response.usage.output_tokens)
+      };
+
+      return {
+        content: responseText,
+        usage
+      };
+
+    } catch (error) {
+      console.error('Claude chat error:', error);
+      throw new Error(`Claude chat failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Estimate token count for a request
    * Claude uses ~4 chars per token as approximation
    */

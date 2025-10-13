@@ -328,6 +328,49 @@ class GeminiProvider extends BaseAIProvider {
   }
 
   /**
+   * Send a chat message and get a response
+   */
+  async chat(messages) {
+    try {
+      // Convert messages to a single prompt (Gemini doesn't support multi-turn in the same way)
+      // Separate system messages and conversation messages
+      const systemMessages = messages.filter(m => m.role === 'system');
+      const conversationMessages = messages.filter(m => m.role !== 'system');
+
+      let fullPrompt = '';
+
+      // Add system context if exists
+      if (systemMessages.length > 0) {
+        fullPrompt = systemMessages.map(m => m.content).join('\n\n') + '\n\n';
+      }
+
+      // Add conversation
+      for (const msg of conversationMessages) {
+        const roleLabel = msg.role === 'user' ? 'User' : 'Assistant';
+        fullPrompt += `${roleLabel}: ${msg.content}\n\n`;
+      }
+
+      const result = await this.generateContentRequest(fullPrompt);
+      const text = this.extractText(result);
+
+      return {
+        content: text,
+        usage: this.extractUsage(result)
+      };
+
+    } catch (error) {
+      console.error('Gemini chat error:', error);
+      if (error.status === 404) {
+        throw new Error(
+          `Gemini chat failed: Model "${this.config.model}" is not available for the current API version. ` +
+          'Try one of: gemini-flash-latest, gemini-2.5-flash, gemini-2.0-flash.'
+        );
+      }
+      throw new Error(`Gemini chat failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Estimate token count for a request
    * Gemini uses similar tokenization to GPT
    */

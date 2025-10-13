@@ -61,6 +61,19 @@ class BaseAIProvider {
   }
 
   /**
+   * Send a chat message and get a response
+   *
+   * @param {Array} messages - Array of message objects with role and content
+   *   Example: [{ role: 'system', content: 'You are...' }, { role: 'user', content: 'Hello' }]
+   * @returns {Promise<Object>} - Response with:
+   *   - {string} content - The response text
+   *   - {Object} usage - Token usage stats (optional)
+   */
+  async chat(messages) {
+    throw new Error('chat() must be implemented by subclass');
+  }
+
+  /**
    * Estimate token count for a request
    *
    * @param {string} userPrompt - User's message
