@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 
 export default function Drivers() {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
-  const { token } = useAuth();
 
   useEffect(() => {
     fetchDrivers();
@@ -16,6 +14,7 @@ export default function Drivers() {
   const fetchDrivers = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       if (filter !== 'all') params.append('status', filter);
 
@@ -68,6 +67,7 @@ export default function Drivers() {
     if (!confirm(`Are you sure you want to delete "${driverName}"?`)) return;
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/drivers/${driverId}`,
         {

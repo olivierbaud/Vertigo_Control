@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 
 // Step components
 import ProtocolInput from '../components/driver/ProtocolInput';
@@ -14,7 +13,6 @@ export default function DriverCreator() {
   const [driverData, setDriverData] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { token } = useAuth();
 
   const steps = [
     { number: 1, name: 'Protocol', component: ProtocolInput },
@@ -39,6 +37,7 @@ export default function DriverCreator() {
   const handleProtocolSubmit = async (protocolSpec) => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/drivers/generate`,
         {
@@ -84,6 +83,7 @@ export default function DriverCreator() {
 
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/drivers/${driverData.driverId}/refine`,
         {

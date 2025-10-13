@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 
 export default function Deployment({ driverData, onDeployComplete }) {
   const [controllers, setControllers] = useState([]);
   const [selectedController, setSelectedController] = useState('');
   const [deploying, setDeploying] = useState(false);
   const [deploymentStatus, setDeploymentStatus] = useState(null);
-  const { token } = useAuth();
 
   useEffect(() => {
     fetchControllers();
@@ -14,6 +12,8 @@ export default function Deployment({ driverData, onDeployComplete }) {
 
   const fetchControllers = async () => {
     try {
+      const token = localStorage.getItem('token');
+
       // Fetch all projects and their controllers
       const projectsResponse = await fetch(
         `${import.meta.env.VITE_API_URL}/api/projects`,
@@ -72,6 +72,7 @@ export default function Deployment({ driverData, onDeployComplete }) {
     setDeploymentStatus({ status: 'deploying', message: 'Deploying driver to controller...' });
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/drivers/${driverData.driverId}/deploy`,
         {

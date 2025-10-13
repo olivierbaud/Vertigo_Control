@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 
 export default function DriverTester({ driverData, onTestComplete }) {
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState(null);
-  const { token } = useAuth();
 
   const runValidation = async () => {
     if (!driverData.driverId) {
@@ -14,6 +12,7 @@ export default function DriverTester({ driverData, onTestComplete }) {
 
     setTesting(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/drivers/${driverData.driverId}/validate`,
         {
