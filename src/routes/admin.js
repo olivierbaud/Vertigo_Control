@@ -247,4 +247,99 @@ router.get('/db-info', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/admin/fix-driver-tables
+ * Drop incorrect driver tables and re-run migration 004
+ *
+ * DANGEROUS: This will drop all driver-related tables!
+ */
+router.post('/fix-driver-tables', async (req, res) => {
+  try {
+    const { integrator_id } = req.user;
+    console.log(`[FIX-DRIVERS] Starting driver table fix requested by user ${integrator_id}...`);
+
+    const results = {
+      success: true,
+      tablesDropped: [],
+      migrationRerun: false,
+      errors: []
+    };
+
+    await pool.query('BEGIN');
+
+    try {
+      // Drop the incorrect tables in reverse dependency order
+      const tablesToDrop = [
+        'device_driver_assignments',
+        'driver_sync_history',
+        'driver_files',
+        'driver_generation_requests',
+        'driver_versions',
+        'drivers'
+      ];
+
+      for (const table of tablesToDrop) {
+        try {
+          await pool.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
+          console.log(`[FIX-DRIVERS] Dropped table: ${table}`);
+          results.tablesDropped.push(table);
+        } catch (dropError) {
+          console.error(`[FIX-DRIVERS] Error dropping ${table}:`, dropError.message);
+          results.errors.push({
+            operation: `drop_${table}`,
+            error: dropError.message
+          });
+        }
+      }
+
+      // Remove the migration 004 record so it can be re-run
+      await pool.query(
+        'DELETE FROM schema_migrations WHERE filename = $1',
+        ['004_driver_management.sql']
+      );
+      console.log(`[FIX-DRIVERS] Removed migration 004 from schema_migrations`);
+
+      // Read and execute migration 004
+      const migrationsDir = path.join(__dirname, '../../db/migrations');
+      const migrationFile = path.join(migrationsDir, '004_driver_management.sql');
+      const sql = fs.readFileSync(migrationFile, 'utf8');
+
+      await pool.query(sql);
+      console.log(`[FIX-DRIVERS] Re-executed migration 004`);
+
+      // Mark migration 004 as applied
+      await pool.query(
+        'INSERT INTO schema_migrations (filename) VALUES ($1)',
+        ['004_driver_management.sql']
+      );
+
+      results.migrationRerun = true;
+
+      await pool.query('COMMIT');
+
+      console.log(`[FIX-DRIVERS] Completed successfully`);
+
+      res.json({
+        message: 'Driver tables fixed successfully',
+        ...results
+      });
+
+    } catch (error) {
+      await pool.query('ROLLBACK');
+      console.error('[FIX-DRIVERS] Transaction error:', error);
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('[FIX-DRIVERS] Fatal error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fix driver tables',
+      message: error.message,
+      detail: error.detail,
+      hint: error.hint
+    });
+  }
+});
+
 module.exports = router;
