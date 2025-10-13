@@ -351,16 +351,42 @@ async function generateDriver(context, aiProvider) {
     // Parse AI response
     let result;
     try {
-      // Remove markdown code blocks if present
-      const cleanedResponse = response.content
-        .replace(/```json\n?/g, '')
+      // Log raw response for debugging
+      console.log('Raw AI response length:', response.content?.length || 0);
+      console.log('First 200 chars:', response.content?.substring(0, 200));
+
+      // Try multiple cleaning strategies
+      let cleanedResponse = response.content;
+
+      // Strategy 1: Remove markdown code blocks
+      cleanedResponse = cleanedResponse
+        .replace(/```json\n?/gi, '')
+        .replace(/```javascript\n?/gi, '')
         .replace(/```\n?/g, '')
         .trim();
 
+      // Strategy 2: Extract JSON if there's text before/after
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedResponse = jsonMatch[0];
+      }
+
+      // Strategy 3: Remove any leading/trailing non-JSON text
+      const firstBrace = cleanedResponse.indexOf('{');
+      const lastBrace = cleanedResponse.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        cleanedResponse = cleanedResponse.substring(firstBrace, lastBrace + 1);
+      }
+
+      console.log('Cleaned response length:', cleanedResponse.length);
+      console.log('First 200 chars of cleaned:', cleanedResponse.substring(0, 200));
+
       result = JSON.parse(cleanedResponse);
     } catch (parseError) {
-      console.error('Failed to parse AI response:', response.content);
-      throw new Error('AI returned invalid JSON format');
+      console.error('Failed to parse AI response:', parseError.message);
+      console.error('Response preview (first 500 chars):', response.content?.substring(0, 500));
+      console.error('Response preview (last 500 chars):', response.content?.substring(response.content.length - 500));
+      throw new Error(`AI returned invalid JSON format: ${parseError.message}`);
     }
 
     // Validate required fields
