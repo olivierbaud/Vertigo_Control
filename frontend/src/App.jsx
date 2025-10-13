@@ -11,6 +11,8 @@ import ProjectDetail from './pages/ProjectDetail';
 import ControllerDetailTabs from './pages/ControllerDetailTabs';
 import Drivers from './pages/Drivers';
 import DriverCreator from './pages/DriverCreator';
+import DriverDetails from './pages/DriverDetails';
+import DriverEdit from './pages/DriverEdit';
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
               <Route path="controllers/:controllerId" element={<ControllerDetailTabs />} />
               <Route path="drivers" element={<Drivers />} />
               <Route path="drivers/create" element={<DriverCreator />} />
+              <Route path="drivers/:id" element={<DriverDetails />} />
+              <Route path="drivers/:id/edit" element={<DriverEdit />} />
             </Route>
 
             {/* Catch all - redirect to dashboard */}
