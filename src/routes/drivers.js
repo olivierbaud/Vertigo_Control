@@ -129,6 +129,77 @@ router.post('/generate', async (req, res) => {
 });
 
 /**
+ * POST /api/drivers/save-manual
+ * Save a manually provided driver (skip AI generation)
+ */
+router.post('/save-manual', async (req, res) => {
+  try {
+    const { integrator_id } = req.user;
+    const {
+      name,
+      device_type,
+      manufacturer,
+      model,
+      protocol_type,
+      driver_code,
+      description,
+      connection_config
+    } = req.body;
+
+    // Validation
+    if (!name || !device_type || !driver_code) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        message: 'name, device_type, and driver_code are required'
+      });
+    }
+
+    // Validate driver code
+    const validation = await driverGenerator.validateDriverCode(driver_code);
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: 'Invalid driver code',
+        message: 'Driver code validation failed',
+        details: validation.errors
+      });
+    }
+
+    // Save to database
+    const driverId = await driverGenerator.saveDriver({
+      integrator_id,
+      name,
+      device_type,
+      manufacturer: manufacturer || 'Unknown',
+      model: model || 'Generic',
+      protocol_type: protocol_type || 'tcp',
+      connection_config: connection_config || {},
+      driver_code,
+      commands: [], // No commands for manual uploads
+      description: description || 'Manually uploaded driver',
+      ai_prompt: null,
+      ai_provider: null,
+      ai_model: null,
+      ai_tokens_used: 0,
+      ai_cost_usd: 0,
+      protocol_notes: 'Manually uploaded driver code'
+    });
+
+    res.status(201).json({
+      success: true,
+      driverId,
+      message: 'Driver saved successfully'
+    });
+
+  } catch (error) {
+    console.error('Save manual driver error:', error);
+    res.status(500).json({
+      error: 'Failed to save driver',
+      message: error.message
+    });
+  }
+});
+
+/**
  * GET /api/drivers
  * List all drivers for the authenticated integrator
  */
@@ -296,6 +367,8 @@ router.post('/:id/validate', async (req, res) => {
     const { integrator_id } = req.user;
     const { id } = req.params;
 
+    console.log(`Validating driver ${id} for integrator ${integrator_id}`);
+
     // Get driver
     const driverResult = await pool.query(
       'SELECT driver_code FROM device_drivers WHERE id = $1 AND integrator_id = $2',
@@ -303,13 +376,22 @@ router.post('/:id/validate', async (req, res) => {
     );
 
     if (driverResult.rows.length === 0) {
+      console.log(`Driver ${id} not found`);
       return res.status(404).json({ error: 'Driver not found' });
     }
 
-    const validation = await driverGenerator.validateDriverCode(
-      driverResult.rows[0].driver_code
-    );
+    const driverCode = driverResult.rows[0].driver_code;
+    console.log(`Driver code length: ${driverCode.length} chars`);
+    console.log(`First 100 chars: ${driverCode.substring(0, 100)}`);
 
+    const validation = await driverGenerator.validateDriverCode(driverCode);
+
+    console.log(`Validation result - valid: ${validation.valid}, errors: ${validation.errors.length}, warnings: ${validation.warnings.length}`);
+    if (!validation.valid) {
+      console.log('Validation errors:', validation.errors);
+    }
+
+    // Always return 200 with validation results
     res.json({
       valid: validation.valid,
       errors: validation.errors,
@@ -318,7 +400,8 @@ router.post('/:id/validate', async (req, res) => {
 
   } catch (error) {
     console.error('Validate driver error:', error);
-    res.status(500).json({ error: 'Failed to validate driver' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to validate driver', message: error.message });
   }
 });
 

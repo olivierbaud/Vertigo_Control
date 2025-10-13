@@ -18,6 +18,8 @@ export default function ProtocolInput({ onSubmit }) {
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [useExistingDriver, setUseExistingDriver] = useState(false);
+  const [existingDriverCode, setExistingDriverCode] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,8 +41,28 @@ export default function ProtocolInput({ onSubmit }) {
     e.preventDefault();
 
     // Validation
-    if (!formData.name || !formData.deviceType || !formData.description) {
+    if (!formData.name || !formData.deviceType) {
       alert('Please fill in all required fields');
+      return;
+    }
+
+    // If using existing driver code
+    if (useExistingDriver) {
+      if (!existingDriverCode.trim()) {
+        alert('Please paste the driver code');
+        return;
+      }
+      onSubmit({
+        ...formData,
+        existingDriverCode,
+        skipAI: true
+      });
+      return;
+    }
+
+    // AI generation path - require description
+    if (!formData.description) {
+      alert('Please fill in the protocol description');
       return;
     }
 
@@ -300,16 +322,92 @@ export default function ProtocolInput({ onSubmit }) {
         </div>
       </div>
 
-      {/* Protocol Description */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Protocol Description
-        </h2>
+      {/* Mode Toggle */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              Driver Source
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {useExistingDriver
+                ? 'Paste existing driver code to skip AI generation'
+                : 'Let AI generate the driver from protocol description'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUseExistingDriver(!useExistingDriver)}
+            className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg
+                       hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm font-medium
+                       text-gray-700 dark:text-gray-300"
+          >
+            {useExistingDriver ? '← Use AI Generation' : 'Paste Existing Code →'}
+          </button>
+        </div>
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            How does the protocol work? <span className="text-red-500">*</span>
-          </label>
+      {/* Existing Driver Code Input */}
+      {useExistingDriver && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Paste Driver Code
+          </h2>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Driver Code (JavaScript) <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={existingDriverCode}
+              onChange={(e) => setExistingDriverCode(e.target.value)}
+              rows={20}
+              placeholder="const BaseDriver = require('./base-driver');
+const net = require('net');
+
+class MyDriver extends BaseDriver {
+  constructor(config) {
+    super(config);
+    // ... your driver code
+  }
+
+  async connect() {
+    // ...
+  }
+
+  async disconnect() {
+    // ...
+  }
+
+  async setControl(control, value) {
+    // ...
+  }
+}
+
+module.exports = MyDriver;"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+              required={useExistingDriver}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Paste complete driver code that extends BaseDriver and implements all required methods
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Protocol Description - Only show for AI generation */}
+      {!useExistingDriver && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Protocol Description
+          </h2>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              How does the protocol work? <span className="text-red-500">*</span>
+            </label>
           <textarea
             name="description"
             value={formData.description}
@@ -366,13 +464,15 @@ SET MUTE 1"
             />
           </div>
         )}
-      </div>
+        </div>
+      )}
 
-      {/* AI Provider Selection */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          AI Provider
-        </h2>
+      {/* AI Provider Selection - Only show for AI generation */}
+      {!useExistingDriver && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            AI Provider
+          </h2>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -409,7 +509,8 @@ SET MUTE 1"
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Submit Button */}
       <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -419,10 +520,21 @@ SET MUTE 1"
                      dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors
                      font-medium flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Generate Driver with AI
+          {useExistingDriver ? (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Save Driver Code
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Generate Driver with AI
+            </>
+          )}
         </button>
       </div>
     </form>

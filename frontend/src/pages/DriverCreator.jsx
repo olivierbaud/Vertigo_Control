@@ -38,34 +38,78 @@ export default function DriverCreator() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/drivers/generate`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(protocolSpec)
+
+      // If skipAI is true, directly save the pasted driver code
+      if (protocolSpec.skipAI) {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/drivers/save-manual`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: protocolSpec.name,
+              device_type: protocolSpec.deviceType,
+              manufacturer: protocolSpec.manufacturer || 'Unknown',
+              model: protocolSpec.model || 'Generic',
+              protocol_type: protocolSpec.protocolType,
+              driver_code: protocolSpec.existingDriverCode,
+              description: protocolSpec.description || 'Manual driver upload',
+              connection_config: protocolSpec.connectionConfig || {}
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to save driver');
         }
-      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to generate driver');
+        const result = await response.json();
+
+        setDriverData({
+          ...protocolSpec,
+          driverCode: protocolSpec.existingDriverCode,
+          driverId: result.driverId,
+          generatedAt: new Date().toISOString(),
+          explanation: 'Manually uploaded driver code'
+        });
+
+        // Skip code editor and go straight to testing
+        setCurrentStep(4);
+      } else {
+        // AI generation path
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/drivers/generate`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(protocolSpec)
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to generate driver');
+        }
+
+        const result = await response.json();
+
+        setDriverData({
+          ...protocolSpec,
+          ...result,
+          generatedAt: new Date().toISOString()
+        });
+
+        handleNext();
       }
-
-      const result = await response.json();
-
-      setDriverData({
-        ...protocolSpec,
-        ...result,
-        generatedAt: new Date().toISOString()
-      });
-
-      handleNext();
     } catch (error) {
-      alert(`Error generating driver: ${error.message}`);
+      alert(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
