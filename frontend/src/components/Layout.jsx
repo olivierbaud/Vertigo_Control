@@ -117,7 +117,8 @@ const Layout = () => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
+      {/* Added padding to the main content area for better visual spacing */}
+      <main className="flex-1 overflow-auto p-6">
         <Outlet />
       </main>
     </div>
