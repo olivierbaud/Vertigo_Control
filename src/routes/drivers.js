@@ -571,7 +571,7 @@ router.post('/:id/deploy', async (req, res) => {
     // Send deployment via WebSocket
     const wsServer = req.app.get('wsServer');
     if (wsServer) {
-      wsServer.broadcastToController(controllerId, {
+      const sent = wsServer.sendToController(controllerId, {
         type: 'driver_sync',
         timestamp: new Date().toISOString(),
         data: {
@@ -585,6 +585,12 @@ router.post('/:id/deploy', async (req, res) => {
           connection_config: driver.connection_config
         }
       });
+
+      if (!sent) {
+        console.warn(`Failed to send driver to controller ${controllerId} - controller offline`);
+      } else {
+        console.log(`Driver deployment message sent to controller ${controllerId}`);
+      }
     }
 
     res.json({
