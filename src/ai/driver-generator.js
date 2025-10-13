@@ -552,21 +552,24 @@ async function validateDriverCode(driverCode) {
   const warnings = [];
 
   try {
-    // Check for required patterns
+    // Check for required patterns using regex for flexibility
     if (!driverCode.includes('extends BaseDriver')) {
       errors.push('Driver must extend BaseDriver');
     }
 
-    if (!driverCode.includes('async connect()')) {
-      errors.push('Driver must implement connect() method');
+    // Check for connect method (allow spaces, newlines between async and method name)
+    if (!/async\s+connect\s*\(/m.test(driverCode)) {
+      errors.push('Driver must implement async connect() method');
     }
 
-    if (!driverCode.includes('async disconnect()')) {
-      errors.push('Driver must implement disconnect() method');
+    // Check for disconnect method
+    if (!/async\s+disconnect\s*\(/m.test(driverCode)) {
+      errors.push('Driver must implement async disconnect() method');
     }
 
-    if (!driverCode.includes('async setControl(')) {
-      errors.push('Driver must implement setControl() method');
+    // Check for setControl method
+    if (!/async\s+setControl\s*\(/m.test(driverCode)) {
+      errors.push('Driver must implement async setControl() method');
     }
 
     if (!driverCode.includes('module.exports')) {
