@@ -194,10 +194,46 @@ router.get('/db-info', async (req, res) => {
       ORDER BY table_name
     `);
 
+    // Get columns for device_drivers table
+    const columnsResult = await pool.query(`
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_name = 'device_drivers'
+        AND table_schema = 'public'
+      ORDER BY ordinal_position
+    `);
+
+    // Test the listDrivers query
+    let queryTestResult = null;
+    try {
+      const testQuery = await pool.query(`
+        SELECT d.*,
+               COUNT(DISTINCT dd.controller_id) as deployment_count
+        FROM device_drivers d
+        LEFT JOIN driver_deployments dd ON d.id = dd.driver_id AND dd.deployment_status = 'active'
+        WHERE d.integrator_id = $1
+        GROUP BY d.id ORDER BY d.created_at DESC
+        LIMIT 10
+      `, [req.user.integrator_id]);
+      queryTestResult = {
+        success: true,
+        rowCount: testQuery.rows.length
+      };
+    } catch (queryError) {
+      queryTestResult = {
+        success: false,
+        error: queryError.message,
+        detail: queryError.detail,
+        hint: queryError.hint
+      };
+    }
+
     res.json({
       databaseVersion: versionResult.rows[0].version,
       totalTables: parseInt(tableResult.rows[0].count),
       driverTables: driverTablesResult.rows.map(r => r.table_name),
+      deviceDriversColumns: columnsResult.rows,
+      listDriversQueryTest: queryTestResult,
       connectionStatus: 'connected'
     });
 
