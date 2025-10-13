@@ -330,42 +330,81 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/drivers/:id
- * Delete a driver (only if not deployed)
+ * Delete a driver and its deployment history
  */
 router.delete('/:id', async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const { integrator_id } = req.user;
     const { id } = req.params;
 
-    // Check if driver is deployed
-    const deploymentCheck = await pool.query(
-      `SELECT COUNT(*) as count FROM driver_deployments
-       WHERE driver_id = $1 AND deployment_status = 'active'`,
-      [id]
-    );
+    await client.query('BEGIN');
 
-    if (parseInt(deploymentCheck.rows[0].count) > 0) {
-      return res.status(400).json({
-        error: 'Cannot delete deployed driver',
-        message: 'This driver is currently deployed to one or more controllers. Remove deployments first.'
-      });
-    }
-
-    // Delete driver
-    const result = await pool.query(
-      'DELETE FROM device_drivers WHERE id = $1 AND integrator_id = $2 RETURNING id',
+    // Verify ownership
+    const ownershipCheck = await client.query(
+      'SELECT id FROM device_drivers WHERE id = $1 AND integrator_id = $2',
       [id, integrator_id]
     );
 
-    if (result.rows.length === 0) {
+    if (ownershipCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Driver not found' });
     }
 
-    res.json({ message: 'Driver deleted successfully' });
+    // Check if driver is currently actively deployed
+    const activeDeploymentCheck = await client.query(
+      `SELECT COUNT(*) as count,
+              ARRAY_AGG(c.name) as controller_names
+       FROM driver_deployments dd
+       JOIN controllers c ON dd.controller_id = c.id
+       WHERE dd.driver_id = $1 AND dd.deployment_status = 'active'
+       GROUP BY dd.driver_id`,
+      [id]
+    );
+
+    if (activeDeploymentCheck.rows.length > 0 && parseInt(activeDeploymentCheck.rows[0].count) > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error: 'Cannot delete deployed driver',
+        message: `This driver is currently deployed to: ${activeDeploymentCheck.rows[0].controller_names.join(', ')}. Please undeploy it first.`,
+        activeDeployments: activeDeploymentCheck.rows[0].controller_names
+      });
+    }
+
+    // Delete all deployment history records (inactive/failed deployments)
+    await client.query(
+      'DELETE FROM driver_deployments WHERE driver_id = $1',
+      [id]
+    );
+
+    // Delete test results
+    await client.query(
+      'DELETE FROM driver_test_results WHERE driver_id = $1',
+      [id]
+    );
+
+    // Delete driver
+    await client.query(
+      'DELETE FROM device_drivers WHERE id = $1 AND integrator_id = $2',
+      [id, integrator_id]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      message: 'Driver and all associated records deleted successfully'
+    });
 
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Delete driver error:', error);
-    res.status(500).json({ error: 'Failed to delete driver' });
+    res.status(500).json({
+      error: 'Failed to delete driver',
+      message: error.message
+    });
+  } finally {
+    client.release();
   }
 });
 
