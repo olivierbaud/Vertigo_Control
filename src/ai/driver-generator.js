@@ -336,6 +336,10 @@ async function generateDriver(context, aiProvider) {
   const prompt = buildDriverGenerationPrompt(context);
 
   try {
+    // Temporarily increase maxTokens for driver generation to ensure complete response
+    const originalMaxTokens = aiProvider.config.maxTokens;
+    aiProvider.config.maxTokens = 16000; // Increase to handle large driver code
+
     // Call AI provider
     const response = await aiProvider.chat([
       {
@@ -348,12 +352,24 @@ async function generateDriver(context, aiProvider) {
       }
     ]);
 
+    // Restore original maxTokens
+    aiProvider.config.maxTokens = originalMaxTokens;
+
     // Parse AI response
     let result;
     try {
       // Log raw response for debugging
       console.log('Raw AI response length:', response.content?.length || 0);
       console.log('First 200 chars:', response.content?.substring(0, 200));
+
+      // Check if response was likely truncated
+      if (response.usage) {
+        console.log('Token usage:', JSON.stringify(response.usage));
+        const outputTokens = response.usage.outputTokens || response.usage.output_tokens || 0;
+        if (outputTokens >= originalMaxTokens * 0.95) {
+          console.warn('WARNING: Response may have been truncated - using max tokens');
+        }
+      }
 
       // Try multiple cleaning strategies
       let cleanedResponse = response.content;
@@ -380,12 +396,26 @@ async function generateDriver(context, aiProvider) {
 
       console.log('Cleaned response length:', cleanedResponse.length);
       console.log('First 200 chars of cleaned:', cleanedResponse.substring(0, 200));
+      console.log('Last 100 chars of cleaned:', cleanedResponse.substring(cleanedResponse.length - 100));
+
+      // Check if JSON appears truncated
+      if (!cleanedResponse.trim().endsWith('}')) {
+        console.error('Response appears truncated - does not end with }');
+        throw new Error('AI response appears to be truncated (incomplete JSON)');
+      }
 
       result = JSON.parse(cleanedResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError.message);
       console.error('Response preview (first 500 chars):', response.content?.substring(0, 500));
       console.error('Response preview (last 500 chars):', response.content?.substring(response.content.length - 500));
+
+      // Check for common truncation patterns
+      if (parseError.message.includes('Unexpected end of JSON input') ||
+          parseError.message.includes('Unexpected end of input')) {
+        throw new Error('AI response was truncated. Try with a simpler protocol description or shorter examples.');
+      }
+
       throw new Error(`AI returned invalid JSON format: ${parseError.message}`);
     }
 
