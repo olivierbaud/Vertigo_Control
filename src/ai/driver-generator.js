@@ -404,7 +404,7 @@ async function generateDriver(context, aiProvider) {
   try {
     // Temporarily increase maxTokens for driver generation to ensure complete response
     const originalMaxTokens = aiProvider.config.maxTokens;
-    aiProvider.config.maxTokens = 16000; // Increase to handle large driver code
+    aiProvider.config.maxTokens = 32000; // Significantly increase to handle large driver code with full implementation
 
     // Call AI provider
     const response = await aiProvider.chat([
@@ -425,6 +425,7 @@ async function generateDriver(context, aiProvider) {
 
     // Parse AI response
     let result;
+    let cleanedResponse = ''; // Declare outside try block so it's available in catch
     try {
       // Log raw response for debugging
       console.log('Raw AI response length:', response.content?.length || 0);
@@ -434,13 +435,13 @@ async function generateDriver(context, aiProvider) {
       if (response.usage) {
         console.log('Token usage:', JSON.stringify(response.usage));
         const outputTokens = response.usage.outputTokens || response.usage.output_tokens || 0;
-        if (outputTokens >= originalMaxTokens * 0.95) {
-          console.warn('WARNING: Response may have been truncated - using max tokens');
+        if (outputTokens >= 31000) { // Check against the new 32000 limit
+          console.warn('WARNING: Response may have been truncated - using near-max tokens');
         }
       }
 
       // Try multiple cleaning strategies
-      let cleanedResponse = response.content;
+      cleanedResponse = response.content;
 
       // Strategy 1: Remove markdown code blocks (do this more aggressively)
       // First, try to extract content between ```json and ``` or between ``` and ```
