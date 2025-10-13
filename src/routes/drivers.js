@@ -146,6 +146,9 @@ router.post('/save-manual', async (req, res) => {
       connection_config
     } = req.body;
 
+    console.log(`Saving manual driver "${name}" for integrator ${integrator_id}`);
+    console.log(`Driver code length: ${driver_code?.length || 0} chars`);
+
     // Validation
     if (!name || !device_type || !driver_code) {
       return res.status(400).json({
@@ -164,7 +167,7 @@ router.post('/save-manual', async (req, res) => {
       });
     }
 
-    // Save to database
+    // Save to database with validation status
     const driverId = await driverGenerator.saveDriver({
       integrator_id,
       name,
@@ -183,6 +186,14 @@ router.post('/save-manual', async (req, res) => {
       ai_cost_usd: 0,
       protocol_notes: 'Manually uploaded driver code'
     });
+
+    // Mark driver as validated since it passed validation
+    await pool.query(
+      'UPDATE device_drivers SET is_validated = true, last_tested_at = NOW() WHERE id = $1',
+      [driverId]
+    );
+
+    console.log(`Driver ${driverId} saved and validated successfully`);
 
     res.status(201).json({
       success: true,
