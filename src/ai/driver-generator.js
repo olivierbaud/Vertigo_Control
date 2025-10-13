@@ -321,12 +321,78 @@ Return a JSON object with:
   "explanation": "brief explanation of the implementation"
 }
 
-IMPORTANT:
+CRITICAL JSON FORMATTING RULES:
 - Return ONLY valid JSON, no markdown formatting
+- In the driverCode field, you MUST properly escape all special characters:
+  * Escape all backslashes: \\ becomes \\\\
+  * Escape all double quotes: " becomes \\"
+  * Escape all newlines: \\n stays as \\n (already escaped)
+  * Escape all tabs: \\t stays as \\t (already escaped)
+- The driverCode must be a valid JSON string value
 - Ensure the driver code is complete and runnable
 - Include all necessary require() statements
 - Handle edge cases (timeouts, disconnections, invalid responses)
 `;
+}
+
+/**
+ * Attempt to fix common JSON escaping issues in AI responses
+ * Specifically handles unescaped quotes in the driverCode field
+ */
+function attemptFixJson(jsonString) {
+  try {
+    // Try to parse as-is first
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.log('Initial parse failed, attempting to fix JSON...');
+    console.log('Error was:', e.message);
+
+    try {
+      // Find the start of driverCode field
+      const driverCodeStart = jsonString.indexOf('"driverCode"');
+      if (driverCodeStart === -1) {
+        throw new Error('Could not find driverCode field');
+      }
+
+      // Find where the value starts (after : and ")
+      const valueStart = jsonString.indexOf('"', jsonString.indexOf(':', driverCodeStart)) + 1;
+
+      // Find the next field (commands, className, etc.) to know where driverCode ends
+      // Look for pattern: ",\n  "nextField":
+      const nextFieldPattern = /,\s*"(commands|className|protocolNotes|dependencies|explanation)":/g;
+      nextFieldPattern.lastIndex = valueStart;
+      const nextFieldMatch = nextFieldPattern.exec(jsonString);
+
+      if (!nextFieldMatch) {
+        throw new Error('Could not find end of driverCode field');
+      }
+
+      // Extract the raw driver code (between the quotes)
+      const valueEnd = nextFieldMatch.index - 1; // Position of " before the comma
+      const rawDriverCode = jsonString.substring(valueStart, valueEnd);
+
+      console.log('Extracted raw driver code, length:', rawDriverCode.length);
+
+      // Properly escape it
+      const escapedDriverCode = rawDriverCode
+        .replace(/\\/g, '\\\\')  // Escape backslashes first
+        .replace(/"/g, '\\"')    // Then escape quotes
+        .replace(/\n/g, '\\n')   // Escape newlines
+        .replace(/\r/g, '\\r')   // Escape carriage returns
+        .replace(/\t/g, '\\t');  // Escape tabs
+
+      // Reconstruct the JSON
+      const before = jsonString.substring(0, valueStart);
+      const after = jsonString.substring(valueEnd);
+      const fixed = before + escapedDriverCode + after;
+
+      console.log('Attempting to parse fixed JSON...');
+      return JSON.parse(fixed);
+    } catch (fixError) {
+      console.error('Could not automatically fix JSON:', fixError.message);
+      throw e; // Rethrow original error
+    }
+  }
 }
 
 /**
@@ -344,7 +410,9 @@ async function generateDriver(context, aiProvider) {
     const response = await aiProvider.chat([
       {
         role: 'system',
-        content: 'You are an expert device driver developer. Return only valid JSON.'
+        content: 'You are an expert device driver developer. You must return ONLY valid, parseable JSON. ' +
+                 'CRITICAL: Properly escape all quotes and backslashes in the driverCode string. ' +
+                 'Every " must be \\" and every \\ must be \\\\. Test your JSON before responding.'
       },
       {
         role: 'user',
@@ -374,12 +442,20 @@ async function generateDriver(context, aiProvider) {
       // Try multiple cleaning strategies
       let cleanedResponse = response.content;
 
-      // Strategy 1: Remove markdown code blocks
-      cleanedResponse = cleanedResponse
-        .replace(/```json\n?/gi, '')
-        .replace(/```javascript\n?/gi, '')
-        .replace(/```\n?/g, '')
-        .trim();
+      // Strategy 1: Remove markdown code blocks (do this more aggressively)
+      // First, try to extract content between ```json and ``` or between ``` and ```
+      let codeBlockMatch = cleanedResponse.match(/```json\s*([\s\S]*?)\s*```/i) ||
+                          cleanedResponse.match(/```\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        cleanedResponse = codeBlockMatch[1];
+      } else {
+        // Fallback: remove any markdown code blocks
+        cleanedResponse = cleanedResponse
+          .replace(/```json\n?/gi, '')
+          .replace(/```javascript\n?/gi, '')
+          .replace(/```\n?/g, '')
+          .trim();
+      }
 
       // Strategy 2: Extract JSON if there's text before/after
       const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
@@ -404,7 +480,8 @@ async function generateDriver(context, aiProvider) {
         throw new Error('AI response appears to be truncated (incomplete JSON)');
       }
 
-      result = JSON.parse(cleanedResponse);
+      // Try to parse with automatic fixing
+      result = attemptFixJson(cleanedResponse);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError.message);
       console.error('Response preview (first 500 chars):', response.content?.substring(0, 500));
@@ -414,6 +491,26 @@ async function generateDriver(context, aiProvider) {
       if (parseError.message.includes('Unexpected end of JSON input') ||
           parseError.message.includes('Unexpected end of input')) {
         throw new Error('AI response was truncated. Try with a simpler protocol description or shorter examples.');
+      }
+
+      // Check for string escaping issues
+      if (parseError.message.includes('Unterminated string') ||
+          parseError.message.includes('Invalid escape')) {
+        console.error('Detected string escaping issue. Position:', parseError.message.match(/\d+/)?.[0]);
+
+        // Try to extract position and show context
+        const position = parseInt(parseError.message.match(/\d+/)?.[0] || '0');
+        if (position > 0) {
+          const start = Math.max(0, position - 100);
+          const end = Math.min(cleanedResponse.length, position + 100);
+          console.error('Context around error position:', cleanedResponse.substring(start, end));
+        }
+
+        throw new Error(
+          'AI generated invalid JSON (string escaping issue). ' +
+          'The driver code likely contains unescaped quotes or backslashes. ' +
+          'This is an AI formatting error - please try again or contact support.'
+        );
       }
 
       throw new Error(`AI returned invalid JSON format: ${parseError.message}`);
