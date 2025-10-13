@@ -16,8 +16,10 @@ export default function DriverTester({ driverData, onTestComplete }) {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/drivers/${driverData.driverId}/validate`,
         {
+          method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         }
       );
