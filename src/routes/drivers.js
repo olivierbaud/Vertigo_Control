@@ -441,6 +441,24 @@ router.post('/:id/validate', async (req, res) => {
       console.log('Validation errors:', validation.errors);
     }
 
+    // Update driver validation status in database
+    await pool.query(
+      `UPDATE device_drivers
+       SET is_validated = $1, last_tested_at = NOW()
+       WHERE id = $2`,
+      [validation.valid, id]
+    );
+
+    // If validation passed, also update status to 'validated'
+    if (validation.valid) {
+      await pool.query(
+        `UPDATE device_drivers
+         SET status = 'validated'
+         WHERE id = $1`,
+        [id]
+      );
+    }
+
     // Always return 200 with validation results
     res.json({
       valid: validation.valid,

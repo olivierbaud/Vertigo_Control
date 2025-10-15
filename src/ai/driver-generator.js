@@ -741,7 +741,7 @@ async function listDrivers(integratorId, filters = {}) {
     SELECT d.*,
            COUNT(DISTINCT dd.controller_id) as deployment_count
     FROM device_drivers d
-    LEFT JOIN driver_deployments dd ON d.id = dd.driver_id AND dd.deployment_status = 'active'
+    LEFT JOIN driver_deployments dd ON d.id = dd.driver_id
     WHERE d.integrator_id = $1
   `;
 

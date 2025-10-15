@@ -139,6 +139,14 @@ class WebSocketServer {
           this.handleSyncError(ws, message.data);
           break;
 
+        case 'driver_sync_complete':
+          this.handleDriverSyncComplete(ws, message.data);
+          break;
+
+        case 'driver_sync_error':
+          this.handleDriverSyncError(ws, message.data);
+          break;
+
         default:
           console.log('Unknown message type:', message.type);
       }
@@ -278,6 +286,32 @@ class WebSocketServer {
        WHERE id = $1`,
       [data.sync_id, data.error_message]
     ).catch(err => console.error('Sync error update error:', err));
+  }
+
+  handleDriverSyncComplete(ws, data) {
+    console.log(`Driver sync complete from ${ws.controllerName}:`, data);
+    // Update driver deployment status to 'active'
+    pool.query(
+      `UPDATE driver_deployments
+       SET deployment_status = 'active',
+           activated_at = NOW(),
+           last_synced_at = NOW()
+       WHERE sync_id = $1 AND controller_id = $2`,
+      [data.sync_id, ws.controllerId]
+    ).catch(err => console.error('Driver sync complete update error:', err));
+  }
+
+   handleDriverSyncError(ws, data) {
+    console.error(`Driver sync error from ${ws.controllerName}:`, data);
+    // Update driver deployment status to 'failed'
+    pool.query(
+      `UPDATE driver_deployments
+       SET deployment_status = 'failed',
+           sync_error_message = $2,
+           last_synced_at = NOW()
+       WHERE sync_id = $1 AND controller_id = $3`,
+      [data.sync_id, data.error_message, ws.controllerId]
+    ).catch(err => console.error('Driver sync error update error:', err));
   }
   
   // Send message to specific controller
