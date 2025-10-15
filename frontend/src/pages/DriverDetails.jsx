@@ -283,7 +283,7 @@ export default function DriverDetails() {
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Cost (USD)</dt>
               <dd className="text-sm text-gray-900 dark:text-white mt-1">
-                ${driver.ai_cost_usd?.toFixed(4) || '0.0000'}
+                ${typeof driver.ai_cost_usd === 'number' ? driver.ai_cost_usd.toFixed(4) : (typeof driver.ai_cost_usd === 'string' ? parseFloat(driver.ai_cost_usd).toFixed(4) : '0.0000')}
               </dd>
             </div>
             <div>
