@@ -7,7 +7,7 @@ function ControlsMapping({ deviceId, deviceName }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingControl, setEditingControl] = useState(null);
   const [testing, setTesting] = useState(null);
-  const [error, setError] = useState('');
+ const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
@@ -322,7 +322,7 @@ function ControlEditor({ control, deviceName, onSave, onCancel }) {
     if (parameters.trim()) {
       try {
         parsedParams = JSON.parse(parameters);
-      } catch (err) {
+      } catch {
         setParamError('Invalid JSON format');
         return;
       }

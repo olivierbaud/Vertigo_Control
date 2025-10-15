@@ -189,4 +189,63 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/projects/:projectId/controllers/:id/available-drivers
+ * Get available driver commands for a controller
+ */
+router.get('/:id/available-drivers', async (req, res) => {
+  try {
+    const { integrator_id } = req.user;
+    const { projectId, id: controllerId } = req.params;
+    
+    // Verify controller ownership
+    const controllerCheck = await pool.query(
+      `SELECT c.id FROM controllers c
+       JOIN projects p ON c.project_id = p.id
+       WHERE c.id = $1 AND c.project_id = $2 AND p.integrator_id = $3`,
+      [controllerId, projectId, integrator_id]
+    );
+    
+    if (controllerCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Controller not found' });
+    }
+    
+    // Get all active driver deployments for this controller
+    const deploymentsResult = await pool.query(
+      `SELECT dd.*, d.name as driver_name, d.device_type, d.protocol_type, d.is_validated
+       FROM driver_deployments dd
+       JOIN device_drivers d ON dd.driver_id = d.id
+       WHERE dd.controller_id = $1
+       AND dd.deployment_status IN ('active', 'pending', 'syncing')`,
+      [controllerId]
+    );
+    
+    // Get all commands from deployed drivers
+    const commandsResult = await pool.query(
+      `SELECT dc.*, d.name as driver_name, d.device_type, d.protocol_type
+       FROM driver_commands dc
+       JOIN driver_deployments dd ON dc.driver_id = dd.driver_id
+       JOIN device_drivers d ON dd.driver_id = d.id
+       WHERE dd.controller_id = $1
+       AND dd.deployment_status IN ('active', 'pending', 'syncing')
+       ORDER BY d.name, dc.command_name`,
+      [controllerId]
+    );
+    
+    res.json({ 
+      drivers: deploymentsResult.rows,
+      commands: commandsResult.rows,
+      summary: {
+        totalDrivers: deploymentsResult.rows.length,
+        totalCommands: commandsResult.rows.length,
+        controllerId: controllerId
+      }
+    });
+    
+  } catch (error) {
+    console.error('Get available drivers error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
